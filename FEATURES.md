@@ -354,7 +354,7 @@ Used by both Earning and Redemption rule modules.
 
 ### Purpose
 
-Side panel for creating or editing rules. Fields change based on selected `RuleType`.
+Side panel for creating or editing rules. Fields change based on selected `RuleType`. Header **Expand** toggles full-screen layout (`max-w-6xl` centered form); **Exit full screen** restores the side panel. Expand state resets on close.
 
 ### Base Fields (all types)
 
@@ -390,6 +390,7 @@ Example: (500,000 / 100,000) × 10 = 50 poin
 | Action | Add mode | Edit mode | Persistence |
 |--------|----------|-----------|-------------|
 | Cancel | Closes drawer | Closes drawer | — |
+| Expand / Exit full screen | Toggles layout | Toggles layout | — |
 | Submit for review / Save changes | Shown | Shown | Non-functional |
 
 ---

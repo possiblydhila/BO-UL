@@ -8,6 +8,11 @@ globs: src/domain/**,src/services/rule*,src/components/DateRangeField.tsx,src/ut
 
 Used by Earning and Redemption rule modules. Side panel for create/edit; fields change by `RuleType`.
 
+## Layout
+
+- **Default:** Right-side drawer (`max-w-xl`) with dimmed backdrop; backdrop click closes.
+- **Full screen:** Header **Expand** (`Expand01`) toggles to full viewport; backdrop hidden; form content uses `max-w-6xl` centered grid. **Exit full screen** (`Minimize01`) restores side panel. State resets when drawer closes.
+
 ## Base fields (all types)
 
 - Rule name, Rule code
@@ -42,6 +47,7 @@ Example: (500,000 / 100,000) × 10 = 50 poin
 | Action | Add | Edit | Persistence |
 |--------|-----|------|-------------|
 | Cancel | ✓ | ✓ | — |
+| Expand / Exit full screen | ✓ | ✓ | — |
 | Submit for review / Save changes | ✓ | ✓ | Non-functional |
 
 ## Rule lifecycle

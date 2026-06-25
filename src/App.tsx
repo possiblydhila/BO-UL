@@ -4,6 +4,8 @@ import {
   ChevronDown,
   Download01,
   Edit03,
+  Expand01,
+  Minimize01,
   Plus,
   SearchLg,
   Upload01,
@@ -61,6 +63,7 @@ import { canEdit } from "./domain/ruleStatus";
 import { filterRules } from "./services/ruleQueries";
 import type { Role, RouteKey, RuleStatus, RuleType } from "./types";
 import { calculatePoints, formatCompact, formatNumber } from "./utils/points";
+import { cx } from "./utils/cx";
 import { DateRangeField } from "./components/DateRangeField";
 import { DashboardPage } from "./components/dashboard/DashboardPage";
 
@@ -302,6 +305,7 @@ function RuleDrawer({
 }) {
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -309,22 +313,42 @@ function RuleDrawer({
     setPeriodEnd(rule?.periodEnd ?? "");
   }, [open, rule]);
 
+  useEffect(() => {
+    if (!open) setExpanded(false);
+  }, [open]);
+
   if (!open) return null;
   const examplePoints = calculatePoints(500000, 100000, 10);
   return (
     <div className="fixed inset-0 z-50">
-      <button className="absolute inset-0 cursor-default bg-overlay/30" aria-label="Close drawer" onClick={onClose} />
-      <aside className="absolute right-0 top-0 flex h-full w-full max-w-xl flex-col bg-primary shadow-2xl">
+      {!expanded && (
+        <button className="absolute inset-0 cursor-default bg-overlay/30" aria-label="Close drawer" onClick={onClose} />
+      )}
+      <aside
+        className={cx(
+          "absolute top-0 flex h-full flex-col bg-primary shadow-2xl transition-[max-width,width,left,right] duration-200 ease-out",
+          expanded ? "inset-x-0 w-full max-w-none" : "right-0 w-full max-w-xl",
+        )}
+      >
         <div className="flex items-start justify-between border-b border-secondary p-6">
           <div>
             <p className="text-sm font-semibold text-brand-secondary">{ruleMode === "EARN" ? "Earning Rule" : "Redemption Rule"}</p>
             <h2 className="mt-1 text-xl font-semibold text-primary">{mode === "add" ? "Add rule" : `Edit ${rule?.code}`}</h2>
             <p className="mt-1 text-sm text-quaternary">Conditional fields follow the CSV draft for rule type behavior.</p>
           </div>
-          <Button variant="ghost" className="h-9 min-h-9 w-9 px-0" onClick={onClose} aria-label="Close" iconLeading={XClose} />
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              className="h-9 min-h-9 w-9 px-0"
+              onClick={() => setExpanded((value) => !value)}
+              aria-label={expanded ? "Exit full screen" : "Expand to full screen"}
+              iconLeading={expanded ? Minimize01 : Expand01}
+            />
+            <Button variant="ghost" className="h-9 min-h-9 w-9 px-0" onClick={onClose} aria-label="Close" iconLeading={XClose} />
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="grid gap-4">
+          <div className={cx("grid gap-4", expanded && "mx-auto w-full max-w-6xl")}>
             <MockInput label="Rule name" value={rule?.name ?? ""} placeholder="Input rule name" />
             <MockInput label="Rule code" value={rule?.code ?? ""} placeholder="EARN-PAY-001" />
             <DateRangeField
