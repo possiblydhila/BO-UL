@@ -135,6 +135,32 @@ export const rewardTypeOptions = [
   { value: "transactional", label: "Transactional" },
 ];
 
+export const cobrandCardTypeOptions = [
+  { value: "bic-co-cobranding-biru-a", label: "BIC Co-Branding Biru A" },
+  { value: "bic-co-cobranding-biru-c", label: "BIC Co-Branding Biru C" },
+  { value: "bic-co-cobranding-biru-d", label: "BIC Co-Branding Biru D" },
+  { value: "bic-co-cobranding-biru-e", label: "BIC Co-Branding Biru E" },
+];
+
+export const thirdPartyProgramOptions = [
+  { value: "map", label: "MAP" },
+  { value: "garuda", label: "Garuda" },
+  { value: "krisflyer", label: "KrisFlyer" },
+];
+
+export const operatorTypeOptions = [
+  { value: "lt", label: "< (upper bound)" },
+  { value: "range", label: "- (range)" },
+  { value: "gt", label: "> (lower bound)" },
+];
+
+export const partnerCapTimeframeOptions = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "annually", label: "Annually" },
+];
+
 export const statusLabels: Record<RuleStatus, string> = {
   draft: "Draft",
   in_review: "In Review",

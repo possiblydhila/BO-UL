@@ -326,7 +326,7 @@ Side panel for creating or editing rules. Fields change based on selected `RuleT
 | Rule Type | Key Fields |
 |-----------|------------|
 | `activity` | Activity type, Amount field, Receive point / Redeem point |
-| `third_party_points` | Card type, Thirdparty (e.g. Garuda), Operator type, Transaction amount, Miles point — **stub only**; tier structure pending business (Gap #6) |
+| `third_party_points` | `card_type` multi-select; repeatable **Partner Earning Blocks** each with tier table (`operator_type`, amount, `miles_point`) and per-block accumulation cap (`cap_type`, `timeframe`, `max_capacity`) — see [ARCHITECTURE.md §4.4.1](ARCHITECTURE.md#441-third-party-points--detailed-structure-working-assumption) |
 | `personal_earning` | Type (birthday), Target user (CSV upload), Reward type, Receive point |
 | `transactional` | Source system, Transaction type, Merchant category/name, Card type, Channel, Transaction amount, Conversion unit, Multiplier, Max capacity, Type/timeframe max capacity |
 | `tactical` | Campaign/event name, Target user, Reward type + all transactional fields |
@@ -551,7 +551,7 @@ From `auditNotes` in `src/data/mockData.ts`. These items need stakeholder resolu
 | 7 | **Campaign comparison** — Requires selected campaign and baseline period; prototype uses mock campaign periods. | #14 |
 | 8 | **Finance governance** — Liability and expired points are read-only; likely need audit trails. | #15 |
 
-**Rule-engine gaps** (not duplicated here): Cardlink channels (#1), merchant category (#2), redemption sign semantics (#3), `ruleTabId`/`sourceTypeId` (#4), expiry semantics (#5), third-party tiers (#6), `PointConfig` shared record (#7) — see [ARCHITECTURE.md §9](ARCHITECTURE.md#9-gaps--open-questions-to-resolve-before-build).
+**Rule-engine gaps** (not duplicated here): Cardlink channels (#1), merchant category (#2), redemption sign semantics (#3), `ruleTabId`/`sourceTypeId` (#4), expiry semantics (#5), third-party per-block card subset (#16), `PointConfig` shared record (#7) — see [ARCHITECTURE.md §9](ARCHITECTURE.md#9-gaps--open-questions-to-resolve-before-build). Third-party nesting is a **working assumption** per Update 2 (Gap #6).
 
 ---
 
@@ -563,6 +563,7 @@ From `auditNotes` in `src/data/mockData.ts`. These items need stakeholder resolu
 | Earning rules — Rule tab | 1 | Done | Mock | None | — | Shared `RuleModule` |
 | Earning rules — Tab General | 1 | — | — | — | — | `PointConfig` not started |
 | Redemption rules | 1 | Done | Mock | None | — | `capType` + value fields in UI |
+| Third-party points drawer | 1 | Done | Mock | None | — | Nested partner blocks per ARCH §4.4.1 (Update 2) |
 | PointConfig API | 1 | — | — | — | — | `GET/PUT /point-config` per ARCH §4.6 |
 | Rule Engine API | 1 | — | — | — | — | CRUD + maker-checker per ARCH §4.6 |
 | Users | — | Shell | — | — | — | Next detail pass |

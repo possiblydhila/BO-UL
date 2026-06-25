@@ -10,7 +10,9 @@
 
 ## Changelog
 
-**Update 1 — Earning Rule tab structure clarified.** The Earning Rule menu is confirmed as (at least) two tabs: **General** (point currency identity + expiry/reset policy) and **Rule** (the rule CRUD documented in §4). This resolves the point-expiry gap previously flagged as Gap #5 in §9, and is reflected in §3 (domain model) and §4.1. The requirement doc also explicitly confirms Gap #6 in writing — third-party points parameters are tagged "still pending from the business team," not just inferred from a thin example.
+**Update 1 — Earning Rule tab structure clarified.** The Earning Rule menu is confirmed as (at least) two tabs: **General** (point currency identity + expiry/reset policy) and **Rule** (the rule CRUD documented in §4). This resolves the point-expiry gap previously flagged as Gap #5 in §9, and is reflected in §3 (domain model) and §4.1.
+
+**Update 2 — Third-party points structure clarified (working assumption).** Confirmed: a single rule can support multiple amount tiers, multiple simultaneous partner programs, and accumulation caps across daily/weekly/monthly/annual windows. Full nesting documented in §4.4.1. Gap #6 is updated from "confirmed pending" to **working assumption** — prototype UI can proceed; one smaller question on per-block card subsets remains open (Gap #16).
 
 ---
 
@@ -147,9 +149,65 @@ One spec inconsistency worth flagging: the Redemption Rule section's worked exam
 | **Activity** | activity_type (10 enumerated values e.g. account activation, first transaction by card type, balance increase), amount (only if activity_type = balance increase), receive_point (fixed value) |
 | **Tactical** | campaign/event name, target_user (all / limited), reward_type (bonus point / transactional) → branches into either a fixed receive_point OR the full transactional field set above |
 | **Personal Earning** | type (birthday / behavior-based personalization), target_user upload (CSV/XLSX, only for behavior-based), reward_type → same branch as Tactical |
-| **Third Party Points** | card_type (co-branding card list), third_party (e.g. MAP, Garuda, KrisFlyer), operator_type (<, =, >, used to define amount-range tiers), transaction_amount, miles_point |
+| **Third Party Points** | Header: `card_type` (multi-select co-branded cards). One or more **Partner Earning Blocks** per rule — see §4.4.1 |
 
 Redemption Rule adds at the header level (before the rule_type branch): `period_start`/`period_end` as explicit timestamps, `CAP_TYPE` (cashback, discount, bill payment, donation, third-party points, prize draw coupon, voucher, e-wallet, auction, goods, annual fee), and `VALUE_POIN_PERCENTAGE` / `VALUE_MIN` / `VALUE_MAX`. These look like they define *how* a redemption converts into the reward type's monetary/unit value — worth confirming whether `CAP_TYPE` constrains which `Reward` catalog entries the rule applies to.
+
+### 4.4.1 Third-Party Points — Detailed Structure (working assumption)
+
+A Third-Party Points rule is not a single flat conversion rate — it's a header plus one or more **Partner Earning Blocks**, each of which has its own tier table:
+
+**Header:** `card_type` — multi-select list of co-branded cards this rule applies to (e.g., BIC Co-Branding Biru A, C, D, E).
+
+**Partner Earning Block** (repeatable, 1..N per rule):
+
+- `third_party` — one partner program per block (MAP, Garuda, KrisFlyer, …). A rule earns into every block's program simultaneously from the same qualifying transaction — this is how a card can dual-accrue into more than one program at once.
+- **Tier table** (repeatable, 1..N per block):
+  - `operator_type` — `<`, `-`, or `>`, defining whether `transaction_amount` is an upper bound, one bound of a range, or a lower bound.
+  - `transaction_amount` — single value for `</>`, min+max for a `-` range.
+  - `miles_point` — miles awarded for a transaction landing in this tier.
+- **Accumulation cap** (per block):
+  - `cap_type` — per transaction / per feature / per user (same enum as the other rule types' `max_capacity`).
+  - `timeframe` — daily / weekly / monthly / annually (wider than the daily/monthly-only timeframe used elsewhere).
+  - `max_capacity` — ceiling on miles awarded within that timeframe.
+
+**Worked example (illustrative, not from the source spec):**
+
+Rule "Biru Series – Dual Mileage," `card_type` = Biru A, C, D, E:
+
+| Block | Tier (transaction amount) | Miles | Cap |
+|-------|---------------------------|-------|-----|
+| Garuda | < 100,000 | 2 | 30 miles / user / monthly |
+| Garuda | 100,001–200,000 | 5 | |
+| Garuda | > 200,000 | 10 | |
+| KrisFlyer | < 100,000 | 1 | 30 miles / user / monthly |
+| KrisFlyer | 100,001–200,000 | 3 | |
+| KrisFlyer | > 200,000 | 6 | |
+
+A single qualifying transaction on a Biru-series card earns into both Garuda and KrisFlyer at once, each governed by its own tier table and its own cap.
+
+**Modeling implication:** this nesting (rule → many partner blocks → many tiers) is a third level deep and a different shape per block. It's a strong argument for the JSON-config approach in §3 over flat child tables — a relational schema for this would need at least two join tables (`rule_partner_block`, `rule_partner_tier`) just for this one rule type, while the other four rule types stay flat.
+
+**Smaller remaining question:** does every Partner Earning Block in a rule apply to the rule's full `card_type` list, or can individual blocks restrict to a subset of those cards? The example above assumes all blocks apply to all listed cards — see Gap #16 in §9.
+
+**Indicative JSON shape:**
+
+```json
+{
+  "card_types": ["bic-co-cobranding-biru-a", "bic-co-cobranding-biru-c"],
+  "partner_blocks": [
+    {
+      "third_party": "garuda",
+      "tiers": [
+        { "operator_type": "lt", "transaction_amount": 100000, "miles_point": 2 },
+        { "operator_type": "range", "transaction_amount_min": 100001, "transaction_amount_max": 200000, "miles_point": 5 },
+        { "operator_type": "gt", "transaction_amount": 200000, "miles_point": 10 }
+      ],
+      "cap": { "cap_type": "per-user", "timeframe": "monthly", "max_capacity": 30 }
+    }
+  ]
+}
+```
 
 ### 4.5 List View & Summary
 
@@ -246,7 +304,8 @@ This section consolidates architecture gaps with dashboard audit items from [FEA
 | 3 | Redemption Rule worked example uses "Earned Points" terminology in 3 of 4 occurrences — confirm sign/direction semantics for redemption. | Open | Architecture | Affects ledger sign conventions. |
 | 4 | `RULE_TAB_ID` and `SOURCE_TYPE_ID` appear in Redemption Rule list columns with no definition elsewhere. | Open | Architecture + prototype | Clarify FK to lookup tables vs. legacy columns to drop. Prototype shows these on `RedemptionRule` in `src/types.ts` with no UI explanation. |
 | 5 | Point-expiry policy configuration. | **Partially resolved** | Architecture | Tab General adds `expired_duration` + `reset_time`. **Still open:** rolling TTL per earn-transaction vs. fixed calendar reset governed by `reset_time`. Confirm before Phase 2 evaluation engine and expiry job. |
-| 6 | Third-party points `operator_type` tier structure — full tier table per rule. | **Confirmed pending** | Architecture | Business team has not finalized parameters. Deprioritize to later phase or ship stub/disabled UI. Prototype has drawer stub fields only. |
+| 6 | Third-party points tier structure — nested partner blocks and tier tables. | **Working assumption** | Architecture (Update 2) | Structure documented in §4.4.1. Prototype drawer implements nested UI. Await formal business sign-off before Phase 2 eval engine. |
+| 16 | Per-block `card_type` subset — can a partner block apply to fewer cards than the rule header? | Open | Architecture (Update 2) | Example assumes all blocks use full header card list. |
 | 7 | `PointConfig` (Tab General): one shared record vs. two independently-maintained records. | Open | Architecture | See §4.1; recommend single shared record. |
 | 8 | Metric formulas (redemption rate by point vs CIF, liability, expired points, participation, growth, campaign comparison). | Open | FEATURES audit #1 | Dashboard KPI definitions need sign-off before Analytics data mart. |
 | 9 | Estimated Point Cost KPI definition. | Open | FEATURES audit #2 | Placeholder in prototype. |
@@ -263,7 +322,8 @@ This section consolidates architecture gaps with dashboard audit items from [FEA
 2. Gap #5 — Rolling TTL vs calendar reset for point expiry
 3. Gap #3 — Redemption sign/direction semantics
 4. Gap #4 — `ruleTabId` / `sourceTypeId` meaning or removal
-5. §12 Prototype Alignment Matrix — Sign off Phase 1 UI scope (Tab General + rule workflow wiring)
+5. Gap #16 — Per-block card subset vs. rule-level card list (third-party points)
+6. §12 Prototype Alignment Matrix — Sign off Phase 1 UI scope (Tab General + rule workflow wiring)
 
 ---
 
@@ -298,12 +358,13 @@ Use when Phase 1 build starts. The prototype today covers only the Rule tab UI m
 - [ ] Wire submit / approve / reject / toggle (replace non-functional buttons in prototype)
 - [ ] Read-only `PointConfig` reference from Redemption Rule if shared-record decision (Gap #7) is adopted
 
+- [x] Third-party points nested partner-block UI (working assumption per §4.4.1 — prototype implemented)
+
 **Explicitly out of Phase 1:**
 
 - Evaluation engine (Phase 2)
 - Analytics data mart and live KPI queries (Phase 3)
 - Reporting tables and export (Phase 4)
-- Third-party points full tier UI (pending Gap #6)
 - User and Rewards modules
 
 ---
@@ -329,7 +390,7 @@ Maps architecture concepts to the current `banking-loyalty-back-office` React pr
 | `RuleConfig` JSON polymorphism | Flat optional fields on rule types | Simplified | Adequate for prototype; diverges from §3 recommendation |
 | Redemption `CAP_TYPE` + value fields | `RedemptionRule.capType`, `valuePointPercentage`, etc. | Done (UI) | Present in drawer + table column |
 | `ruleTabId` / `sourceTypeId` | `RedemptionRule` type + mock data | Present, undefined | Gap #4 — needs business clarification |
-| Third-party points tiers | Drawer stub fields | Stub | Gap #6 — deprioritize per architecture |
+| Third-party points (partner blocks + tiers) | `ThirdPartyPointsRuleFields` in `src/App.tsx` | UI mock (Update 2) | Nested blocks/tiers/caps per §4.4.1; Gap #16 open |
 | Analytics KPIs + data mart | `dashboardData` in `src/data/mockData.ts` | UI only | Phase 3; formulas still open (FEATURES audit panel) |
 | Reporting six tabs | `reporting` route | Tabs only | Phase 4 |
 | Point expiry job | — | N/A in prototype | Depends on Tab General semantics (Gap #5 partial) |

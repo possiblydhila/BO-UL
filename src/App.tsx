@@ -35,6 +35,7 @@ import {
   auditNotes,
   cardTypeOptions,
   channelOptions,
+  cobrandCardTypeOptions,
   dashboardData,
   earningRules,
   maxCapacityTimeframeOptions,
@@ -42,6 +43,8 @@ import {
   merchantCategoryOptions,
   merchantNameOptions,
   navItems,
+  operatorTypeOptions,
+  partnerCapTimeframeOptions,
   redemptionRules,
   reportTabs,
   rewardTypeOptions,
@@ -52,6 +55,7 @@ import {
   sourceSystemOptions,
   statusLabels,
   targetUserOptions,
+  thirdPartyProgramOptions,
 } from "./data/mockData";
 import type {
   DashboardFilters,
@@ -820,14 +824,13 @@ function FileUploadField({
   );
 }
 
-function TacticalRuleFields() {
+function TargetUserRewardFields() {
   const [targetUser, setTargetUser] = useState(targetUserOptions[0].value);
   const [rewardType, setRewardType] = useState(rewardTypeOptions[0].value);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   return (
     <>
-      <MockInput label="Campaign/event name" value="HUT BNI" />
       <SelectField
         label="Target user"
         value={targetUser}
@@ -854,6 +857,366 @@ function TacticalRuleFields() {
         onChange={setRewardType}
       />
     </>
+  );
+}
+
+function TacticalRuleFields() {
+  return (
+    <>
+      <MockInput label="Campaign/event name" value="HUT BNI" />
+      <TargetUserRewardFields />
+    </>
+  );
+}
+
+function PersonalEarningRuleFields() {
+  return (
+    <>
+      <MockInput label="Type" value="birthday" />
+      <TargetUserRewardFields />
+      <MockInput label="Receive point" value="100 point" />
+    </>
+  );
+}
+
+function createFieldId() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+function CheckboxGroupField({
+  label,
+  options,
+  selected,
+  onChange,
+  className = "",
+}: {
+  label: string;
+  options: { value: string; label: string }[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+  className?: string;
+}) {
+  return (
+    <fieldset className={className}>
+      <legend className="mb-1.5 block text-sm font-medium text-slate-700">{label}</legend>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const checked = selected.includes(option.value);
+          return (
+            <label
+              key={option.value}
+              className={`focus-ring inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
+                checked ? "border-brand-300 bg-brand-50 text-brand-900" : "border-slate-300 bg-white text-slate-700"
+              }`}
+            >
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-slate-300 text-brand-600"
+                checked={checked}
+                onChange={() => {
+                  onChange(
+                    checked ? selected.filter((value) => value !== option.value) : [...selected, option.value],
+                  );
+                }}
+              />
+              {option.label}
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
+type PartnerTier = {
+  id: string;
+  operatorType: string;
+  transactionAmount: string;
+  transactionAmountMin: string;
+  transactionAmountMax: string;
+  milesPoint: string;
+};
+
+type PartnerBlock = {
+  id: string;
+  thirdParty: string;
+  tiers: PartnerTier[];
+  capType: string;
+  timeframe: string;
+  maxCapacity: string;
+};
+
+function createDefaultPartnerTier(): PartnerTier {
+  return {
+    id: createFieldId(),
+    operatorType: operatorTypeOptions[0].value,
+    transactionAmount: "",
+    transactionAmountMin: "",
+    transactionAmountMax: "",
+    milesPoint: "",
+  };
+}
+
+function createDefaultPartnerBlocks(): PartnerBlock[] {
+  return [
+    {
+      id: createFieldId(),
+      thirdParty: "garuda",
+      tiers: [
+        {
+          id: createFieldId(),
+          operatorType: "lt",
+          transactionAmount: "100000",
+          transactionAmountMin: "",
+          transactionAmountMax: "",
+          milesPoint: "2",
+        },
+        {
+          id: createFieldId(),
+          operatorType: "range",
+          transactionAmount: "",
+          transactionAmountMin: "100001",
+          transactionAmountMax: "200000",
+          milesPoint: "5",
+        },
+        {
+          id: createFieldId(),
+          operatorType: "gt",
+          transactionAmount: "200000",
+          transactionAmountMin: "",
+          transactionAmountMax: "",
+          milesPoint: "10",
+        },
+      ],
+      capType: maxCapacityTypeOptions[2].value,
+      timeframe: "monthly",
+      maxCapacity: "30",
+    },
+    {
+      id: createFieldId(),
+      thirdParty: "krisflyer",
+      tiers: [
+        {
+          id: createFieldId(),
+          operatorType: "lt",
+          transactionAmount: "100000",
+          transactionAmountMin: "",
+          transactionAmountMax: "",
+          milesPoint: "1",
+        },
+        {
+          id: createFieldId(),
+          operatorType: "range",
+          transactionAmount: "",
+          transactionAmountMin: "100001",
+          transactionAmountMax: "200000",
+          milesPoint: "3",
+        },
+        {
+          id: createFieldId(),
+          operatorType: "gt",
+          transactionAmount: "200000",
+          transactionAmountMin: "",
+          transactionAmountMax: "",
+          milesPoint: "6",
+        },
+      ],
+      capType: maxCapacityTypeOptions[2].value,
+      timeframe: "monthly",
+      maxCapacity: "30",
+    },
+  ];
+}
+
+function PartnerTierRow({
+  tier,
+  onChange,
+  onRemove,
+  canRemove,
+}: {
+  tier: PartnerTier;
+  onChange: (tier: PartnerTier) => void;
+  onRemove: () => void;
+  canRemove: boolean;
+}) {
+  return (
+    <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-2">
+      <SelectField
+        label="Operator type"
+        value={tier.operatorType}
+        options={operatorTypeOptions}
+        onChange={(operatorType) => onChange({ ...tier, operatorType })}
+      />
+      {tier.operatorType === "range" ? (
+        <>
+          <MockInput
+            label="Transaction amount (min)"
+            value={tier.transactionAmountMin}
+            placeholder="100001"
+          />
+          <MockInput
+            label="Transaction amount (max)"
+            value={tier.transactionAmountMax}
+            placeholder="200000"
+          />
+        </>
+      ) : (
+        <MockInput
+          label="Transaction amount"
+          value={tier.transactionAmount}
+          placeholder={tier.operatorType === "lt" ? "100000" : "200000"}
+        />
+      )}
+      <MockInput label="Miles point" value={tier.milesPoint} placeholder="5" />
+      {canRemove && (
+        <div className="flex items-end sm:col-span-2">
+          <Button variant="ghost" onClick={onRemove}>
+            Remove tier
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PartnerBlockCard({
+  block,
+  index,
+  onChange,
+  onRemove,
+  canRemove,
+}: {
+  block: PartnerBlock;
+  index: number;
+  onChange: (block: PartnerBlock) => void;
+  onRemove: () => void;
+  canRemove: boolean;
+}) {
+  return (
+    <section className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-slate-950">Partner block {index + 1}</p>
+          <p className="text-xs text-slate-500">One partner program with its own tier table and accumulation cap.</p>
+        </div>
+        {canRemove && (
+          <Button variant="ghost" onClick={onRemove}>
+            Remove block
+          </Button>
+        )}
+      </div>
+      <div className="grid gap-4">
+        <SelectField
+          label="Third party"
+          value={block.thirdParty}
+          options={thirdPartyProgramOptions}
+          onChange={(thirdParty) => onChange({ ...block, thirdParty })}
+        />
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-slate-700">Tier table</p>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                onChange({ ...block, tiers: [...block.tiers, createDefaultPartnerTier()] })
+              }
+            >
+              Add tier
+            </Button>
+          </div>
+          {block.tiers.map((tier) => (
+            <PartnerTierRow
+              key={tier.id}
+              tier={tier}
+              canRemove={block.tiers.length > 1}
+              onChange={(nextTier) =>
+                onChange({
+                  ...block,
+                  tiers: block.tiers.map((item) => (item.id === tier.id ? nextTier : item)),
+                })
+              }
+              onRemove={() =>
+                onChange({ ...block, tiers: block.tiers.filter((item) => item.id !== tier.id) })
+              }
+            />
+          ))}
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <SelectField
+            label="Cap type"
+            value={block.capType}
+            options={maxCapacityTypeOptions}
+            onChange={(capType) => onChange({ ...block, capType })}
+          />
+          <SelectField
+            label="Timeframe"
+            value={block.timeframe}
+            options={partnerCapTimeframeOptions}
+            onChange={(timeframe) => onChange({ ...block, timeframe })}
+          />
+          <MockInput label="Max capacity (miles)" value={block.maxCapacity} placeholder="30" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ThirdPartyPointsRuleFields() {
+  const [cardTypes, setCardTypes] = useState<string[]>(
+    cobrandCardTypeOptions.map((option) => option.value),
+  );
+  const [partnerBlocks, setPartnerBlocks] = useState<PartnerBlock[]>(createDefaultPartnerBlocks);
+
+  return (
+    <div className="grid gap-4 sm:col-span-2">
+      <CheckboxGroupField
+        className="sm:col-span-2"
+        label="Card type"
+        options={cobrandCardTypeOptions}
+        selected={cardTypes}
+        onChange={setCardTypes}
+      />
+      <div className="space-y-4 sm:col-span-2">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-slate-950">Partner earning blocks</p>
+            <p className="text-xs text-slate-500">
+              Each block accrues into one partner program. All blocks apply to the same qualifying transaction.
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              setPartnerBlocks([
+                ...partnerBlocks,
+                {
+                  id: createFieldId(),
+                  thirdParty: thirdPartyProgramOptions[0].value,
+                  tiers: [createDefaultPartnerTier()],
+                  capType: maxCapacityTypeOptions[0].value,
+                  timeframe: partnerCapTimeframeOptions[0].value,
+                  maxCapacity: "",
+                },
+              ])
+            }
+          >
+            Add partner block
+          </Button>
+        </div>
+        {partnerBlocks.map((block, index) => (
+          <PartnerBlockCard
+            key={block.id}
+            block={block}
+            index={index}
+            canRemove={partnerBlocks.length > 1}
+            onChange={(nextBlock) =>
+              setPartnerBlocks(partnerBlocks.map((item) => (item.id === block.id ? nextBlock : item)))
+            }
+            onRemove={() => setPartnerBlocks(partnerBlocks.filter((item) => item.id !== block.id))}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -929,11 +1292,7 @@ function ConditionalRuleFields({ selectedType, kind }: { selectedType: RuleType;
   if (selectedType === "third_party_points") {
     return (
       <div className="grid gap-4 sm:grid-cols-2">
-        <MockInput label="Card type" value="bic co cobranding biru a" />
-        <MockInput label="Thirdparty" value="Garuda" />
-        <MockInput label="Operator type" value="<, -, >" />
-        <MockInput label="Transaction amount" value="500000" />
-        <MockInput label="Miles point" value="5 miles" />
+        <ThirdPartyPointsRuleFields />
       </div>
     );
   }
@@ -941,10 +1300,7 @@ function ConditionalRuleFields({ selectedType, kind }: { selectedType: RuleType;
   if (selectedType === "personal_earning") {
     return (
       <div className="grid gap-4 sm:grid-cols-2">
-        <MockInput label="Type" value="birthday" />
-        <MockInput label="Target user" placeholder="Upload CSV/XLSX for behavior-based personalization" />
-        <MockInput label="Reward type" value="bonus point / transactional" />
-        <MockInput label="Receive point" value="100 point" />
+        <PersonalEarningRuleFields />
       </div>
     );
   }
