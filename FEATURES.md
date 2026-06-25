@@ -38,7 +38,7 @@ High-level status vs [ARCHITECTURE.md](ARCHITECTURE.md) build phases. **UI** = p
 
 | Module | Arch. phase | UI | Data | Backend | Blockers / notes |
 |--------|-------------|----|------|---------|------------------|
-| Earning Rule — Tab General (`PointConfig`) | 1 | — | — | — | Gap #7: shared vs duplicated record TBD |
+| Point Configuration (`PointConfig`) | 1 | Done | Mock | — | Hybrid expiry: rolling TTL + annual balance reset |
 | Earning Rule — Rule tab | 1 | Done | Mock | — | Date range picker for period; submit/approve/toggle non-functional |
 | Redemption Rule | 1 | Done | Mock | — | Shared `RuleModule`; Gap #4 on `ruleTabId`/`sourceTypeId` |
 | Analytics Dashboard | 3 | Done | Mock (computed) | — | TBD KPIs: redemption-by-point, Cost |
@@ -46,7 +46,7 @@ High-level status vs [ARCHITECTURE.md](ARCHITECTURE.md) build phases. **UI** = p
 | User | — | Shell | — | — | Out of scope in ARCHITECTURE.md |
 | Rewards Points Management | — | Shell | — | — | Out of scope; needed before Phase 2 eval engine |
 
-**Phase 1 frontend checklist** (from [ARCHITECTURE.md §10](ARCHITECTURE.md#phase-1-scope-card-implementation-checklist)): Tab General UI, unified `Rule` type, wire workflow actions — all pending.
+**Phase 1 frontend checklist** (from [ARCHITECTURE.md §10](ARCHITECTURE.md#phase-1-scope-card-implementation-checklist)): Point Configuration UI done; wire rule workflow actions — pending.
 
 ---
 
@@ -55,7 +55,8 @@ High-level status vs [ARCHITECTURE.md](ARCHITECTURE.md) build phases. **UI** = p
 | Route Key | Label | Description | Status |
 |-----------|-------|-------------|--------|
 | `dashboard` | Analytics Dashboard | Monitoring KPI loyalty, campaign, liability, dan channel | **Implemented** (mock; Phase 3 backend) |
-| `earning-rules` | Earning Rule | Konfigurasi aturan perolehan poin | **Partial** — Rule tab only; Tab General not started |
+| `point-config` | Point Configuration | Identitas poin, masa berlaku, dan kebijakan reset | **Implemented** (mock; Phase 1 backend) |
+| `earning-rules` | Earning Rule | Konfigurasi aturan perolehan poin | **Implemented** (mock; Phase 1 backend) |
 | `redemption-rules` | Redemption Rule | Konfigurasi aturan penukaran poin | **Implemented** (mock; Phase 1 backend) |
 | `users` | User | Daftar dan profil pengguna loyalty | Placeholder |
 | `rewards` | Rewards Points Management | Katalog reward dan stok | Placeholder |
@@ -68,6 +69,7 @@ flowchart LR
   subgraph shell [AppShell]
     Sidebar --> RouteSwitch
     RouteSwitch --> Dashboard
+    RouteSwitch --> PointConfig
     RouteSwitch --> EarningRules
     RouteSwitch --> RedemptionRules
     RouteSwitch --> UsersPlaceholder
@@ -169,7 +171,61 @@ Each KPI card shows value, detail, and inline sparkline (`tabular-nums`). TBD ca
 
 ---
 
-## 2. Earning Rule Management
+## 2. Point Configuration
+
+**Route:** `point-config`  
+**Architecture:** [ARCHITECTURE.md §4.1](ARCHITECTURE.md#41-tab-structure) · **Build phase:** 1
+
+### Purpose
+
+Configure program-level loyalty point identity and expiry/reset policy. Single shared record referenced by earning rules, redemption rules, and analytics KPIs (e.g. Expired Points). Replaces the original "Earning Rule — Tab General" placement with a dedicated navigation module.
+
+**Expiry model:** Hybrid — (1) **rolling TTL** per earn batch using duration + unit; (2) **annual balance reset** that zeroes all remaining points on a fixed calendar date (e.g. 1 January at 00:00 WIB). Both mechanisms operate independently.
+
+### Key UI Elements
+
+- **Preview card:** Point logo (URL or initials), point name, rolling + annual reset summary
+- **Metadata:** Last updated timestamp and editor (`updatedBy`)
+- **Edit mode:** Edit / Save / Cancel toggles form fields
+- **Point identity:** Point name, logo URL, upload button (non-functional)
+- **Rolling expiry:** Duration value + unit (`monthly` | `quarterly` | `yearly`)
+- **Annual balance reset:** Reset month, reset day, reset time (HH:MM WIB)
+- **Downstream usage:** Reference cards for Earning Rule, Redemption Rule, Analytics Dashboard
+
+### Data model
+
+`PointConfig` in `src/domain/pointConfig.ts`. Mock: `defaultPointConfig` in `src/data/mockData.ts`.
+
+| Field | Purpose |
+|-------|---------|
+| `pointLogo` | Point currency branding (image URL) |
+| `pointName` | Display name for loyalty points |
+| `expiredDurationValue` + `expiredDurationUnit` | Rolling TTL per earn batch (e.g. 12 monthly from earn date) |
+| `annualBalanceResetMonth` + `annualBalanceResetDay` | Annual calendar date for full balance zero-out (e.g. 1 Jan) |
+| `resetTime` | Time of day (WIB) when annual balance reset job runs |
+| `updatedBy` / `updatedAt` | Audit metadata |
+
+### User Flow
+
+1. Sidebar → **Point Configuration**
+2. Review preview and current policy
+3. **Edit configuration** → modify fields
+4. **Save changes** → updates session state (no backend persistence)
+5. **Cancel** → reverts to last saved state
+
+### Status
+
+| Capability | Status |
+|------------|--------|
+| Form UI + preview | Done (UI) |
+| Edit / save / cancel | Done (session state) |
+| Logo file upload | Non-functional |
+| `GET/PUT /point-config` API | Not started |
+| Read-only reference from rule modules | Not started |
+
+---
+
+## 3. Earning Rule Management
 
 **Route:** `earning-rules`  
 **Architecture:** [ARCHITECTURE.md §4](ARCHITECTURE.md#4-module-earning-rule--redemption-rule-engine) · **Build phase:** 1
@@ -178,7 +234,7 @@ Each KPI card shows value, detail, and inline sparkline (`tabular-nums`). TBD ca
 
 Configure and review point-earning rules. Supports role-based editing and a full add/edit drawer with conditional fields per rule type.
 
-**Tab structure (requirements vs prototype):** The architecture spec defines two tabs — **General** (`PointConfig`: point logo, name, expiry/reset policy) and **Rule** (rule list/CRUD). Only the **Rule** tab is implemented in the prototype today. Tab General is not started — see [ARCHITECTURE.md §4.1](ARCHITECTURE.md#41-tab-structure) and [§12 Prototype Alignment Matrix](ARCHITECTURE.md#12-prototype-alignment-matrix).
+**Point identity & expiry:** Managed in [§2 Point Configuration](#2-point-configuration) (`point-config` route).
 
 ### Key UI Elements
 
@@ -240,8 +296,7 @@ approver  → edit in_review, scheduled
 
 | Capability | Status |
 |------------|--------|
-| Tab General (`PointConfig`) | Not started |
-| Tab Rule — list / search / filter | Done |
+| List / search / filter | Done |
 | Tab Rule — role-gated edit | Done (UI) |
 | Tab Rule — add/edit drawer | Done (UI) |
 | Tab Rule — period date range picker | Done (UI) — `DateRangeField` |
@@ -249,22 +304,9 @@ approver  → edit in_review, scheduled
 | Tab Rule — inactive toggle | Non-functional |
 | Tab Rule — export | Non-functional |
 
-### Planned: Tab General (`PointConfig`)
-
-Single-record form (requirements). Target fields per [ARCHITECTURE.md §3](ARCHITECTURE.md#3-core-domain-model):
-
-| Field | Purpose |
-|-------|---------|
-| `point_logo` | Point currency branding |
-| `point_name` | Display name for loyalty points |
-| `expired_duration_value` + `expired_duration_unit` | Expiry policy (e.g. 12 monthly) |
-| `reset_time` | Calendar reset time (semantics TBD — Gap #5) |
-
-No `PointConfig` type, mock record, or UI exists in the prototype yet.
-
 ---
 
-## 3. Redemption Rule Management
+## 4. Redemption Rule Management
 
 **Route:** `redemption-rules`  
 **Architecture:** [ARCHITECTURE.md §4](ARCHITECTURE.md#4-module-earning-rule--redemption-rule-engine) · **Build phase:** 1
@@ -302,11 +344,11 @@ Same state shape as `RuleModule` with `ruleMode: "REDEEM"`. Data from `getRulesB
 
 ### Status
 
-Same capability breakdown as Earning Rule — Rule tab only (no Tab General on redemption route; `PointConfig` lives under Earning Rule per requirements). List, drawer, role-gated edit done (UI); submit/save, inactive toggle, and export non-functional.
+Same capability breakdown as Earning Rule. List, drawer, role-gated edit done (UI); submit/save, inactive toggle, and export non-functional. Point identity managed in [§2 Point Configuration](#2-point-configuration).
 
 ---
 
-## 4. Rule Drawer (Shared)
+## 5. Rule Drawer (Shared)
 
 Used by both Earning and Redemption rule modules.
 
@@ -352,7 +394,7 @@ Example: (500,000 / 100,000) × 10 = 50 poin
 
 ---
 
-## 5. User Management (Placeholder)
+## 6. User Management (Placeholder)
 
 **Route:** `users`
 
@@ -372,7 +414,7 @@ Navigation slot only. Shows "Ready for next detail pass" placeholder.
 
 ---
 
-## 6. Rewards Points Management (Placeholder)
+## 7. Rewards Points Management (Placeholder)
 
 **Route:** `rewards`
 
@@ -392,7 +434,7 @@ Navigation slot only. Shows "Ready for next detail pass" placeholder.
 
 ---
 
-## 7. Reporting (Placeholder)
+## 8. Reporting (Placeholder)
 
 **Route:** `reporting`  
 **Architecture:** [ARCHITECTURE.md §7](ARCHITECTURE.md#7-module-reporting) · **Build phase:** 4
@@ -462,7 +504,7 @@ Source: `src/types.ts`
 ### Navigation
 
 ```typescript
-type RouteKey = "dashboard" | "users" | "earning-rules" | "redemption-rules" | "rewards" | "reporting"
+type RouteKey = "dashboard" | "point-config" | "users" | "earning-rules" | "redemption-rules" | "rewards" | "reporting"
 type NavItem = { key: RouteKey; label: string; description: string; icon: LucideIcon }
 ```
 
@@ -523,7 +565,7 @@ type RuleConfig =
   | { ruleType: "third_party_points"; cardTypes: string[]; partnerBlocks: PartnerBlock[] }
 ```
 
-Unified engine modules: `src/domain/rule.ts`, `src/domain/ruleStatus.ts`, `src/domain/ruleConfig.ts`, `src/services/ruleQueries.ts`, `src/services/ruleWorkflow.ts`. Mock data: `rules[]` + `getRulesByMode()` in `src/data/mockData.ts`. See [ARCHITECTURE.md §3](ARCHITECTURE.md#3-core-domain-model). `PointConfig` type and API shape documented there; no `src/types.ts` entry yet.
+Unified engine modules: `src/domain/rule.ts`, `src/domain/ruleStatus.ts`, `src/domain/ruleConfig.ts`, `src/services/ruleQueries.ts`, `src/services/ruleWorkflow.ts`. Mock data: `rules[]` + `getRulesByMode()` in `src/data/mockData.ts`. See [ARCHITECTURE.md §3](ARCHITECTURE.md#3-core-domain-model). `PointConfig` in `src/domain/pointConfig.ts`; mock `defaultPointConfig` in `src/data/mockData.ts`.
 
 ### Enums
 
@@ -558,7 +600,7 @@ From `auditNotes` in `src/data/mockData.ts`. These items need stakeholder resolu
 | 7 | **Campaign comparison** — Requires selected campaign and baseline period; prototype uses mock campaign periods. | #14 |
 | 8 | **Finance governance** — Liability and expired points are read-only; likely need audit trails. | #15 |
 
-**Rule-engine gaps** (not duplicated here): Cardlink channels (#1), merchant category (#2), redemption sign semantics (#3), `ruleTabId`/`sourceTypeId` (#4), expiry semantics (#5), third-party per-block card subset (#16), `PointConfig` shared record (#7) — see [ARCHITECTURE.md §9](ARCHITECTURE.md#9-gaps--open-questions-to-resolve-before-build). Third-party nesting is a **working assumption** per Update 2 (Gap #6).
+**Rule-engine gaps** (not duplicated here): Cardlink channels (#1), merchant category (#2), redemption sign semantics (#3), `ruleTabId`/`sourceTypeId` (#4), third-party per-block card subset (#16) — see [ARCHITECTURE.md §9](ARCHITECTURE.md#9-gaps--open-questions-to-resolve-before-build). Third-party nesting is a **working assumption** per Update 2 (Gap #6). Gap #5 resolved: hybrid rolling TTL + annual balance reset. Gap #7 resolved in prototype: single shared `PointConfig` via `point-config` route.
 
 ---
 
@@ -567,12 +609,12 @@ From `auditNotes` in `src/data/mockData.ts`. These items need stakeholder resolu
 | Area | Phase | UI | Data | Persistence | Backend API | Notes |
 |------|-------|----|------|-------------|-------------|-------|
 | Dashboard | 3 | Done | Mock | None | — | Filters partially simulated |
+| Point Configuration | 1 | Done | Mock | Session | — | `PointConfigPage` in `src/App.tsx`; `src/domain/pointConfig.ts` |
 | Earning rules — Rule tab | 1 | Done | Mock | None | — | Shared `RuleModule`; `ruleMode=EARN`; unified `rules[]` |
 | Rule drawer — period picker | 1 | Done | Mock | None | — | `src/components/DateRangeField.tsx` |
-| Earning rules — Tab General | 1 | — | — | — | — | `PointConfig` not started |
 | Redemption rules | 1 | Done | Mock | None | — | `ruleMode=REDEEM`; `redemption` header in unified `Rule` |
 | Third-party points drawer | 1 | Done | Mock | None | — | Nested partner blocks per ARCH §4.4.1 (Update 2) |
-| PointConfig API | 1 | — | — | — | — | `GET/PUT /point-config` per ARCH §4.6 |
+| PointConfig API | 1 | Done | Mock | Session | — | `GET/PUT /point-config` per ARCH §4.6 |
 | Rule Engine API | 1 | — | — | — | — | CRUD + maker-checker per ARCH §4.6 |
 | Users | — | Shell | — | — | — | Next detail pass |
 | Rewards | — | Shell | — | — | — | Next detail pass |
@@ -591,6 +633,8 @@ Timestamped log of prototype changes. Git commit hash included when available.
 
 | Timestamp (WIB) | Commit | Area | Change |
 |-----------------|--------|------|--------|
+| 2026-06-25 16:00 | — | Point Configuration | Confirmed hybrid expiry model: rolling TTL per earn + annual full-balance reset (e.g. 1 Jan). Added `annualBalanceResetMonth/Day` fields; updated UI, PRD, ARCHITECTURE (Gap #5 resolved). |
+| 2026-06-25 15:30 | — | Point Configuration | Added `point-config` route with `PointConfigPage` (logo, name, expiry duration, reset time). `PointConfig` type in `src/domain/pointConfig.ts`, mock in `mockData.ts`. PRD: `prd-point-config.mdc`. Replaces Earning Rule Tab General as shared program setup. |
 | 2026-06-25 14:00 | — | Unified Rule Engine | Merged `EarningRule`/`RedemptionRule` into single `Rule` with `ruleMode` (EARN/REDEEM) and polymorphic `RuleConfig`. Added `src/domain/rule.ts`, `ruleStatus.ts`, `ruleConfig.ts`, `src/services/ruleQueries.ts`, `ruleWorkflow.ts`. Mock data consolidated to `rules[]` + `getRulesByMode()`. `RuleModule`/`RuleDrawer` use `ruleMode` instead of `kind`. |
 | 2026-06-25 11:55 | `f804673` | Earning / Redemption rule drawer | Replaced Period start/end text placeholders with **Rule period** `DateRangeField` — click-to-open dual-month range calendar, Apply/Clear, controlled `periodStart`/`periodEnd` state in `RuleDrawer`. Added `src/components/DateRangeField.tsx`. Fixed `postcss.config.js` ESM plugin imports. |
 | 2026-06-25 11:25 | `31d9cf1` | Rule drawer — conditional fields | Third-party points nested **Partner Earning Blocks** (tier table + per-block caps). Personal earning reuses target-user/reward fields. Documented in ARCHITECTURE.md §4.4.1. |
@@ -607,7 +651,7 @@ Update this file when:
 - Business rules are signed off — move resolved items out of [Open Items](#open-items--business-sign-off) and update [ARCHITECTURE.md §9](ARCHITECTURE.md#9-gaps--open-questions-to-resolve-before-build) accordingly
 - Backend integration changes flows, state, or data models
 - Non-functional actions become wired up (export, drill-down, CRUD persistence)
-- Tab General (`PointConfig`) is implemented or architecture gaps in §9 are resolved
+- Point Configuration (`PointConfig`) changes or architecture gaps in §9 are resolved
 - Any shipped UI or flow change — append a row to [Changes Tracking](#changes-tracking) with timestamp and commit hash
 - **Cursor PRD rules** — when any module section above changes, update the matching `.cursor/rules/prd-*.mdc` file (see [Cursor PRD rules](#cursor-prd-rules))
 
@@ -619,12 +663,13 @@ Per-module PRDs for the Cursor agent live in `.cursor/rules/`. **`FEATURES.md` i
 |-----------|--------|------------------|----------------------|
 | — | Global context (stack, nav, constraints) | `.cursor/rules/00-project-context.mdc` | [Overview](#overview), [Navigation Map](#navigation-map) |
 | `dashboard` | Analytics Dashboard | `.cursor/rules/prd-analytics-dashboard.mdc` | [§1 Analytics Dashboard](#1-analytics-dashboard) |
-| `earning-rules` | Earning Rule | `.cursor/rules/prd-earning-rules.mdc` | [§2 Earning Rule Management](#2-earning-rule-management) |
-| `redemption-rules` | Redemption Rule | `.cursor/rules/prd-redemption-rules.mdc` | [§3 Redemption Rule Management](#3-redemption-rule-management) |
-| — | Rule drawer (shared) | `.cursor/rules/prd-rule-drawer.mdc` | [§4 Rule Drawer (Shared)](#4-rule-drawer-shared) |
-| `users` | User | `.cursor/rules/prd-users.mdc` | [§5 User Management (Placeholder)](#5-user-management-placeholder) |
-| `rewards` | Rewards Points Management | `.cursor/rules/prd-rewards.mdc` | [§6 Rewards Points Management (Placeholder)](#6-rewards-points-management-placeholder) |
-| `reporting` | Reporting | `.cursor/rules/prd-reporting.mdc` | [§7 Reporting (Placeholder)](#7-reporting-placeholder) |
+| `point-config` | Point Configuration | `.cursor/rules/prd-point-config.mdc` | [§2 Point Configuration](#2-point-configuration) |
+| `earning-rules` | Earning Rule | `.cursor/rules/prd-earning-rules.mdc` | [§3 Earning Rule Management](#3-earning-rule-management) |
+| `redemption-rules` | Redemption Rule | `.cursor/rules/prd-redemption-rules.mdc` | [§4 Redemption Rule Management](#4-redemption-rule-management) |
+| — | Rule drawer (shared) | `.cursor/rules/prd-rule-drawer.mdc` | [§5 Rule Drawer (Shared)](#5-rule-drawer-shared) |
+| `users` | User | `.cursor/rules/prd-users.mdc` | [§6 User Management (Placeholder)](#6-user-management-placeholder) |
+| `rewards` | Rewards Points Management | `.cursor/rules/prd-rewards.mdc` | [§7 Rewards Points Management (Placeholder)](#7-rewards-points-management-placeholder) |
+| `reporting` | Reporting | `.cursor/rules/prd-reporting.mdc` | [§8 Reporting (Placeholder)](#8-reporting-placeholder) |
 
 **Sync checklist** (after editing a module in this file):
 
@@ -640,6 +685,7 @@ Per-module PRDs for the Cursor agent live in `.cursor/rules/`. **`FEATURES.md` i
 | `FEATURES.md` | Prototype feature tracking, UI flows, implementation status, change log |
 | `ARCHITECTURE.md` | System architecture, domain model, phases, gaps, API contracts |
 | `.cursor/rules/*.mdc` | Per-module PRD rules for Cursor agent (synced from this file) |
+| `src/domain/pointConfig.ts` | `PointConfig` type and expiry unit labels |
 | `src/domain/rule.ts` | Unified `Rule`, `RuleConfig`, `RedemptionHeader` types |
 | `src/domain/ruleStatus.ts` | Status labels, `canEdit`, transition guards |
 | `src/domain/ruleConfig.ts` | Config defaults and accessors per rule type |

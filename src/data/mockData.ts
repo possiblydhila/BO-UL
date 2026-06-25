@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Coins,
   FileBarChart,
   Gift,
   LayoutDashboard,
@@ -7,6 +8,7 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
+import type { ExpiredDurationUnit, PointConfig } from "../domain/pointConfig";
 import type { Channel, NavItem, SourceSystem, TransactionType } from "../types";
 import {
   generateCifPool,
@@ -22,6 +24,12 @@ export const navItems: NavItem[] = [
     label: "Analytics Dashboard",
     description: "Monitoring KPI loyalty, campaign, liability, dan channel.",
     icon: LayoutDashboard,
+  },
+  {
+    key: "point-config",
+    label: "Point Configuration",
+    description: "Identitas poin, masa berlaku, dan kebijakan reset.",
+    icon: Coins,
   },
   {
     key: "users",
@@ -53,6 +61,39 @@ export const navItems: NavItem[] = [
     description: "Laporan operasional dan rekonsiliasi.",
     icon: FileBarChart,
   },
+];
+
+export const defaultPointConfig: PointConfig = {
+  pointLogo: "",
+  pointName: "BNI Poin",
+  expiredDurationValue: 12,
+  expiredDurationUnit: "monthly",
+  annualBalanceResetMonth: 1,
+  annualBalanceResetDay: 1,
+  resetTime: "00:00",
+  updatedBy: "Product Ops",
+  updatedAt: "2026-06-01T08:00:00+07:00",
+};
+
+export const expiredDurationUnitOptions: { value: ExpiredDurationUnit; label: string }[] = [
+  { value: "monthly", label: "Monthly" },
+  { value: "quarterly", label: "Quarterly" },
+  { value: "yearly", label: "Yearly" },
+];
+
+export const balanceResetMonthOptions = [
+  { value: "1", label: "January" },
+  { value: "2", label: "February" },
+  { value: "3", label: "March" },
+  { value: "4", label: "April" },
+  { value: "5", label: "May" },
+  { value: "6", label: "June" },
+  { value: "7", label: "July" },
+  { value: "8", label: "August" },
+  { value: "9", label: "September" },
+  { value: "10", label: "October" },
+  { value: "11", label: "November" },
+  { value: "12", label: "December" },
 ];
 
 export const channelOptions: { value: Channel; label: string }[] = [

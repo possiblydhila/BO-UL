@@ -12,14 +12,7 @@ globs: src/domain/**,src/services/rule*,src/App.tsx
 
 Configure and review point-earning rules. Role-based editing and add/edit drawer with conditional fields per rule type.
 
-## Tab structure
-
-| Tab | Content | Status |
-|-----|---------|--------|
-| **General** (`PointConfig`) | Point logo, name, expiry/reset policy | **Not started** |
-| **Rule** | List, search, filter, drawer CRUD | Done (UI) |
-
-Tab General fields (planned): `point_logo`, `point_name`, `expired_duration_value` + unit, `reset_time`. No `PointConfig` type or UI yet.
+**Point identity & expiry:** Managed in the shared **Point Configuration** module (`point-config` route) — see `prd-point-config`.
 
 ## Key UI
 
@@ -56,6 +49,5 @@ Data: `getRulesByMode("EARN")` from `rules[]` in `src/data/mockData.ts`, type `R
 
 | Capability | Status |
 |------------|--------|
-| Tab General | Not started |
-| Tab Rule — list, search, filter, drawer, period picker | Done (UI) |
+| List, search, filter, drawer, period picker | Done (UI) |
 | Submit/save, inactive toggle, export | Non-functional |

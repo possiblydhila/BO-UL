@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 
 export type RouteKey =
   | "dashboard"
+  | "point-config"
   | "users"
   | "earning-rules"
   | "redemption-rules"
@@ -117,3 +118,4 @@ export type TbdKpi = {
 };
 
 export type { CapType, RedemptionHeader, Rule, RuleConfig, RuleMode } from "./domain/rule";
+export type { ExpiredDurationUnit, PointConfig } from "./domain/pointConfig";

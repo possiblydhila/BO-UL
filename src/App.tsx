@@ -12,6 +12,9 @@ import {
 import {
   cardTypeOptions,
   cobrandCardTypeOptions,
+  defaultPointConfig,
+  expiredDurationUnitOptions,
+  balanceResetMonthOptions,
   getRulesByMode,
   maxCapacityTimeframeOptions,
   maxCapacityTypeOptions,
@@ -30,6 +33,8 @@ import {
   thirdPartyProgramOptions,
 } from "./data/mockData";
 import type { Rule, RuleMode } from "./domain/rule";
+import { formatAnnualBalanceResetDate, formatExpiryPolicySummary } from "./domain/pointConfig";
+import type { PointConfig } from "./domain/pointConfig";
 import { formatCapType } from "./domain/rule";
 import type { PersonalEarningConfig, TacticalConfig, TransactionalFields } from "./domain/rule";
 import {
@@ -1044,6 +1049,293 @@ function ConditionalRuleFields({
   );
 }
 
+function TextField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+  disabled,
+  hint,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  hint?: string;
+}) {
+  return (
+    <label className="block text-sm font-medium text-slate-700">
+      <span className="mb-1.5 block">{label}</span>
+      <input
+        type={type}
+        value={value}
+        disabled={disabled}
+        placeholder={placeholder}
+        onChange={(event) => onChange(event.target.value)}
+        className="focus-ring h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 disabled:bg-slate-100 disabled:text-slate-400"
+      />
+      {hint && <span className="mt-1.5 block text-xs text-slate-500">{hint}</span>}
+    </label>
+  );
+}
+
+function NumberField({
+  label,
+  value,
+  onChange,
+  min = 1,
+  disabled,
+  hint,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  disabled?: boolean;
+  hint?: string;
+}) {
+  return (
+    <label className="block text-sm font-medium text-slate-700">
+      <span className="mb-1.5 block">{label}</span>
+      <input
+        type="number"
+        min={min}
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(Number(event.target.value) || min)}
+        className="focus-ring h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 disabled:bg-slate-100 disabled:text-slate-400"
+      />
+      {hint && <span className="mt-1.5 block text-xs text-slate-500">{hint}</span>}
+    </label>
+  );
+}
+
+function PointLogoPreview({ config }: { config: PointConfig }) {
+  const initials = config.pointName
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
+  return (
+    <div className="flex items-center gap-4">
+      <div className="flex h-16 w-16 flex-none items-center justify-center overflow-hidden rounded-2xl bg-brand-50 ring-1 ring-brand-100">
+        {config.pointLogo ? (
+          <img src={config.pointLogo} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="text-lg font-bold text-brand-700">{initials || "PT"}</span>
+        )}
+      </div>
+      <div>
+        <p className="text-lg font-semibold text-slate-950">{config.pointName || "Point name"}</p>
+        <p className="mt-1 text-sm text-slate-600">{formatExpiryPolicySummary(config)}</p>
+      </div>
+    </div>
+  );
+}
+
+function PointConfigPage() {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<PointConfig>(defaultPointConfig);
+  const [saved, setSaved] = useState<PointConfig>(defaultPointConfig);
+
+  function updateDraft<K extends keyof PointConfig>(key: K, value: PointConfig[K]) {
+    setDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  function startEdit() {
+    setDraft(saved);
+    setEditing(true);
+  }
+
+  function cancelEdit() {
+    setDraft(saved);
+    setEditing(false);
+  }
+
+  function saveChanges() {
+    setSaved({
+      ...draft,
+      updatedBy: "Product Ops",
+      updatedAt: new Date().toISOString(),
+    });
+    setEditing(false);
+  }
+
+  const active = editing ? draft : saved;
+  const updatedAtLabel = new Date(saved.updatedAt).toLocaleString("id-ID", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        eyebrow="Program setup"
+        title="Point Configuration"
+        description="Kelola identitas mata uang poin, masa berlaku, dan waktu reset. Konfigurasi ini dipakai bersama oleh modul Earning Rule dan Redemption Rule."
+        action={
+          editing ? (
+            <>
+              <Button variant="secondary" onClick={cancelEdit}>
+                Cancel
+              </Button>
+              <Button variant="primary" onClick={saveChanges}>
+                Save changes
+              </Button>
+            </>
+          ) : (
+            <Button variant="primary" onClick={startEdit}>
+              <Edit3 className="h-4 w-4" />
+              Edit configuration
+            </Button>
+          )
+        }
+      />
+
+      <section className="surface p-5 md:p-6">
+        <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-center md:justify-between">
+          <PointLogoPreview config={active} />
+          <div className="rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            <p>
+              Last updated <span className="font-medium text-slate-900">{updatedAtLabel}</span>
+            </p>
+            <p className="mt-1">
+              By <span className="font-medium text-slate-900">{saved.updatedBy}</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+          <div className="space-y-5">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Point identity</h2>
+            <TextField
+              label="Point name"
+              value={active.pointName}
+              disabled={!editing}
+              placeholder="e.g. BNI Poin"
+              hint="Displayed across earning, redemption, and customer-facing channels."
+              onChange={(value) => updateDraft("pointName", value)}
+            />
+            <TextField
+              label="Point logo URL"
+              value={active.pointLogo}
+              disabled={!editing}
+              placeholder="https://..."
+              hint="Image URL for the point currency icon. Leave blank to use initials preview."
+              onChange={(value) => updateDraft("pointLogo", value)}
+            />
+            {editing && (
+              <label className="block text-sm font-medium text-slate-700">
+                <span className="mb-1.5 block">Upload logo</span>
+                <button
+                  type="button"
+                  className="focus-ring inline-flex min-h-10 items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-600"
+                >
+                  <Upload className="h-4 w-4" />
+                  Choose file
+                </button>
+                <span className="mt-1.5 block text-xs text-slate-500">Prototype only — file upload is not wired.</span>
+              </label>
+            )}
+          </div>
+
+          <div className="space-y-5">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Expiry & reset policy</h2>
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-950">Hybrid expiry model</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                Points expire individually on a rolling TTL from each earn date. Separately, the full customer balance is reset to zero on an annual calendar date.
+              </p>
+            </div>
+
+            <div className="space-y-4 rounded-lg border border-slate-200 p-4">
+              <h3 className="text-sm font-semibold text-slate-900">Rolling expiry (per earn)</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <NumberField
+                  label="Expiry duration"
+                  value={active.expiredDurationValue}
+                  disabled={!editing}
+                  min={1}
+                  hint="Each earn batch expires this long after the earn date."
+                  onChange={(value) => updateDraft("expiredDurationValue", value)}
+                />
+                <SelectField
+                  label="Duration unit"
+                  value={active.expiredDurationUnit}
+                  disabled={!editing}
+                  options={expiredDurationUnitOptions}
+                  onChange={(value) => updateDraft("expiredDurationUnit", value as PointConfig["expiredDurationUnit"])}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4 rounded-lg border border-slate-200 p-4">
+              <h3 className="text-sm font-semibold text-slate-900">Annual balance reset</h3>
+              <p className="text-sm text-slate-600">
+                All remaining points are zeroed on this date each year (e.g. 1 January).
+              </p>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <SelectField
+                  label="Reset month"
+                  value={String(active.annualBalanceResetMonth)}
+                  disabled={!editing}
+                  options={balanceResetMonthOptions}
+                  onChange={(value) => updateDraft("annualBalanceResetMonth", Number(value))}
+                />
+                <NumberField
+                  label="Reset day"
+                  value={active.annualBalanceResetDay}
+                  disabled={!editing}
+                  min={1}
+                  hint="Day of month (e.g. 1 for 1 Jan)."
+                  onChange={(value) => updateDraft("annualBalanceResetDay", value)}
+                />
+                <TextField
+                  label="Reset time"
+                  type="time"
+                  value={active.resetTime}
+                  disabled={!editing}
+                  hint="Time of day (WIB) when the reset job runs."
+                  onChange={(value) => updateDraft("resetTime", value)}
+                />
+              </div>
+              <p className="text-xs text-slate-500">
+                Next scheduled reset: {formatAnnualBalanceResetDate(active.annualBalanceResetMonth, active.annualBalanceResetDay)} at {active.resetTime} WIB
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="surface p-5 md:p-6">
+        <h2 className="text-base font-semibold text-slate-950">Downstream usage</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+          Earning and redemption rules reference this single program-level record for point naming, branding, and expiry behavior.
+          Rule drawers and KPI calculations will read these values once backend integration is available.
+        </p>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {[
+            { title: "Earning Rule", detail: "Uses point name and expiry policy when issuing points." },
+            { title: "Redemption Rule", detail: "Uses point name and branding when redeeming rewards." },
+            { title: "Analytics Dashboard", detail: "Expired Points KPI reflects both rolling TTL write-offs and annual balance resets." },
+          ].map((item) => (
+            <div key={item.title} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-semibold text-slate-950">{item.title}</p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">{item.detail}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function PlaceholderPage({ title, description, children }: { title: string; description: string; children?: React.ReactNode }) {
   return (
     <div className="space-y-6">
@@ -1153,6 +1445,7 @@ function App() {
 
         <main className="mx-auto max-w-[1600px] px-4 py-6 md:px-8 md:py-8">
           {route === "dashboard" && <DashboardPage />}
+          {route === "point-config" && <PointConfigPage />}
           {route === "earning-rules" && (
             <RuleModule
               title="Earning Rule"

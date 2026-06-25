@@ -10,7 +10,7 @@
 
 ## Changelog
 
-**Update 1 — Earning Rule tab structure clarified.** The Earning Rule menu is confirmed as (at least) two tabs: **General** (point currency identity + expiry/reset policy) and **Rule** (the rule CRUD documented in §4). This resolves the point-expiry gap previously flagged as Gap #5 in §9, and is reflected in §3 (domain model) and §4.1.
+**Update 1 — Earning Rule tab structure clarified.** The Earning Rule menu is confirmed as (at least) two tabs: **General** (point currency identity + expiry/reset policy) and **Rule** (the rule CRUD documented in §4). Point currency settings now live in the dedicated Point Configuration module (§4.1). Expiry model confirmed: hybrid rolling TTL + annual balance reset (Gap #5 resolved).
 
 **Update 2 — Third-party points structure clarified (working assumption).** Confirmed: a single rule can support multiple amount tiers, multiple simultaneous partner programs, and accumulation caps across daily/weekly/monthly/annual windows. Full nesting documented in §4.4.1. Gap #6 is updated from "confirmed pending" to **working assumption** — prototype UI can proceed; one smaller question on per-block card subsets remains open (Gap #16).
 
@@ -92,7 +92,7 @@ A key observation up front: **Earning Rule and Redemption Rule are structurally 
 | `Channel` | Wondr, ATM, SMS, BNI Direct, Mbank, API, Cardlink-channel | channel_code, channel_name, source_system |
 | `MerchantCategory` / `Merchant` | Category and merchant master data | category_code, merchant_name |
 | `Campaign` | Tactical/personal-earning campaign reference | campaign_id, name, target_user_type |
-| `PointConfig` | Point-currency identity and expiry/reset policy — from Tab General (see §4.1) | point_logo, point_name, expired_duration_value, expired_duration_unit (monthly/yearly/...), reset_time, updated_by, updated_at |
+| `PointConfig` | Point-currency identity and expiry/reset policy — dedicated Point Configuration module (see §4.1) | point_logo, point_name, expired_duration_value, expired_duration_unit, annual_balance_reset_month, annual_balance_reset_day, reset_time, updated_by, updated_at |
 
 The polymorphic `RuleConfig` is the trickiest modeling decision. Two viable approaches:
 
@@ -105,18 +105,23 @@ The polymorphic `RuleConfig` is the trickiest modeling decision. Two viable appr
 
 ## 4. Module: Earning Rule & Redemption Rule Engine
 
-### 4.1 Tab Structure
+### 4.1 Point Configuration Module
 
-The requirement confirms Earning Rule is a two-tab page, not a single list view:
+The original requirement scoped point-currency settings as "Earning Rule – Tab General." The prototype places them in a **dedicated `point-config` navigation route** so earning and redemption share one program-level record without duplication.
 
-| Tab | Purpose | Cardinality |
+| Setting | Purpose | Cardinality |
 |---|---|---|
-| **General** | Point currency identity and expiry/reset policy: point logo, point name, expired duration (numeric value + timeframe unit — monthly, yearly, etc.), reset time | Single record |
-| **Rule** | The rule list/CRUD documented in §4.2–§4.6 below (transactional / activity / tactical / personal earning / third-party points) | Many records |
+| Point logo, point name | Loyalty point currency identity and branding | Single record |
+| Expired duration (value + unit) | **Rolling TTL:** each earn batch expires after this period from earn date | Single record |
+| Annual balance reset (month + day + time) | **Calendar reset:** entire customer balance zeroed on this date each year (e.g. 1 Jan 00:00 WIB) | Single record |
 
-This Tab General record is the actual source of the point-expiry policy that the "Expired Points" KPI in §6 depends on.
+**Expiry model (confirmed):** Hybrid — rolling per-earn TTL **and** annual full-balance reset operate independently. Either mechanism can remove points; whichever applies first wins for a given balance.
 
-**Open question:** the spec scopes this explicitly as "Earning Rule – Tab General," but `point_name` and `point_logo` describe the loyalty point currency itself, which is shared between earning and redemption — it isn't conceptually an earning-only setting. Worth confirming whether this is (a) one shared `PointConfig` object referenced read-only from both Earning Rule and Redemption Rule, or (b) two independently-edited records that happen to be redundant. (a) is the architecturally cleaner choice and avoids the two modules ever disagreeing about what the currency is called or how long it lives — recommend pushing for that in the next round of requirements.
+This record is the source of the point-expiry policy that the "Expired Points" KPI in §6 depends on. Earning Rule and Redemption Rule modules reference it read-only when displaying point naming and when the evaluation engine applies expiry logic.
+
+**Prototype:** `PointConfigPage` in `src/App.tsx`, type `PointConfig` in `src/domain/pointConfig.ts`, mock `defaultPointConfig` in `src/data/mockData.ts`.
+
+**Phase 2 jobs:** (1) rolling TTL expiry job — scans earn batches past TTL; (2) annual balance reset job — zeroes all balances on configured calendar date at `reset_time`.
 
 ### 4.2 Status Lifecycle (shared by both modes)
 
@@ -219,7 +224,7 @@ Both Earning Rule and Redemption Rule need:
 
 ### 4.6 API Surface (indicative)
 
-`POST /rules` (create draft) · `PUT /rules/{id}` (edit, status+role gated) · `POST /rules/{id}/submit` · `POST /rules/{id}/approve` · `POST /rules/{id}/reject` · `POST /rules/{id}/toggle-status` · `GET /rules?mode=EARN&status=&type=&page=` · `GET /rules/{id}` · `GET /rules/summary?mode=EARN` · `GET /rules/export?format=csv|xlsx` · `GET /point-config` · `PUT /point-config` (Tab General — single-record read/update, pending the shared-vs-duplicated decision in §4.1)
+`POST /rules` (create draft) · `PUT /rules/{id}` (edit, status+role gated) · `POST /rules/{id}/submit` · `POST /rules/{id}/approve` · `POST /rules/{id}/reject` · `POST /rules/{id}/toggle-status` · `GET /rules?mode=EARN&status=&type=&page=` · `GET /rules/{id}` · `GET /rules/summary?mode=EARN` · `GET /rules/export?format=csv|xlsx` · `GET /point-config` · `PUT /point-config` (Point Configuration — single-record read/update; prototype uses session state)
 
 ---
 
@@ -286,7 +291,7 @@ Each report needs the same export capability as Analytics (CSV/XLSX at minimum; 
 
 ## 8. Cross-Cutting Concerns
 
-- **Point expiry job.** Now configurable via Tab General's `expired_duration` / `reset_time` (§4.1), so the missing-policy gap itself is resolved. Still need the exact semantics confirmed — rolling per-transaction TTL vs. fixed calendar reset (see Gap #5 in §9) — before the scheduled expiry job can be built.
+- **Point expiry jobs (two).** (1) **Rolling TTL** — each earn batch expires per `expired_duration` after earn date. (2) **Annual balance reset** — all remaining points zeroed on `annual_balance_reset_month/day` at `reset_time` WIB. Both configured in Point Configuration (§4.1).
 - **Rule versioning / audit.** Once a rule goes Active, its config shouldn't be silently mutable — every edit needs to be versioned so historical point calculations remain explainable (a CIF who earned points under v1 of a rule shouldn't have that retroactively reinterpreted under v2).
 - **Idempotency on transaction events.** Source systems (Saving, Cardlink) will redeliver events on retry; the rule evaluation engine needs a dedup key (e.g., txn_ref + rule_id) before writing to the ledger.
 - **Reconciliation feedback loop.** Reporting's "reconciliation results" implies a process comparing the point ledger against core banking postings — this needs to exist as a real batch job, not just a report screen.
@@ -303,10 +308,10 @@ This section consolidates architecture gaps with dashboard audit items from [FEA
 | 2 | Merchant category is "BNI doesn't have this data, just make something up" — confirm whether this is a real near-term data gap. | Open | Architecture | Several KPIs depend on category-level reporting. |
 | 3 | Redemption Rule worked example uses "Earned Points" terminology in 3 of 4 occurrences — confirm sign/direction semantics for redemption. | Open | Architecture | Affects ledger sign conventions. |
 | 4 | `RULE_TAB_ID` and `SOURCE_TYPE_ID` appear in Redemption Rule list columns with no definition elsewhere. | Open | Architecture + prototype | Clarify FK to lookup tables vs. legacy columns to drop. Prototype stores these as optional fields on `RedemptionHeader` in `src/domain/rule.ts`. |
-| 5 | Point-expiry policy configuration. | **Partially resolved** | Architecture | Tab General adds `expired_duration` + `reset_time`. **Still open:** rolling TTL per earn-transaction vs. fixed calendar reset governed by `reset_time`. Confirm before Phase 2 evaluation engine and expiry job. |
+| 5 | Point-expiry policy configuration. | **Resolved** | Architecture + stakeholder | Hybrid: rolling TTL per earn batch + annual full-balance reset on calendar date. See §4.1. |
 | 6 | Third-party points tier structure — nested partner blocks and tier tables. | **Working assumption** | Architecture (Update 2) | Structure documented in §4.4.1. Prototype drawer implements nested UI. Await formal business sign-off before Phase 2 eval engine. |
 | 16 | Per-block `card_type` subset — can a partner block apply to fewer cards than the rule header? | Open | Architecture (Update 2) | Example assumes all blocks use full header card list. |
-| 7 | `PointConfig` (Tab General): one shared record vs. two independently-maintained records. | Open | Architecture | See §4.1; recommend single shared record. |
+| 7 | `PointConfig`: one shared record vs. two independently-maintained records. | **Resolved (prototype)** | Architecture | Dedicated `point-config` route with single shared record. Backend should enforce one row. |
 | 8 | Metric formulas (redemption rate by point vs CIF, liability, expired points, participation, growth, campaign comparison). | Open | FEATURES audit #1 | Dashboard KPI definitions need sign-off before Analytics data mart. |
 | 9 | Estimated Point Cost KPI definition. | Open | FEATURES audit #2 | Placeholder in prototype. |
 | 10 | Real-time SLA for dashboard refresh. | Open | FEATURES audit #3 | Prototype shows "Last updated: just now" without polling. |
@@ -318,18 +323,16 @@ This section consolidates architecture gaps with dashboard audit items from [FEA
 
 **Suggested stakeholder review order:**
 
-1. §4.1 — Confirm `PointConfig` is one shared record (recommended) vs duplicated per module (Gap #7)
-2. Gap #5 — Rolling TTL vs calendar reset for point expiry
-3. Gap #3 — Redemption sign/direction semantics
-4. Gap #4 — `ruleTabId` / `sourceTypeId` meaning or removal
-5. Gap #16 — Per-block card subset vs. rule-level card list (third-party points)
-6. §12 Prototype Alignment Matrix — Sign off Phase 1 UI scope (Tab General + rule workflow wiring)
+1. Gap #3 — Redemption sign/direction semantics
+2. Gap #4 — `ruleTabId` / `sourceTypeId` meaning or removal
+3. Gap #16 — Per-block card subset vs. rule-level card list (third-party points)
+4. §12 Prototype Alignment Matrix — Sign off Phase 1 UI scope (Point Configuration + rule workflow wiring)
 
 ---
 
 ## 10. Suggested Build Phasing
 
-**Phase 1 — Foundation:** Rule Engine data model (shared earn/redeem), CRUD APIs, status state machine, maker-checker workflow, list/summary UI, plus the Tab General `PointConfig` record (logo, name, expiry, reset time) — Phase 2's expiry logic depends on it. No real-time scoring yet — rules can be authored and approved.
+**Phase 1 — Foundation:** Rule Engine data model (shared earn/redeem), CRUD APIs, status state machine, maker-checker workflow, list/summary UI, plus the Point Configuration `PointConfig` record (logo, name, expiry, reset time) — Phase 2's expiry logic depends on it. No real-time scoring yet — rules can be authored and approved.
 
 **Phase 2 — Evaluation Engine:** Event stream consumer that evaluates active rules against incoming Saving/Cardlink transactions and writes to the point ledger. This is the highest-risk, highest-effort phase — budget accordingly.
 
@@ -346,6 +349,7 @@ Use when Phase 1 build starts. The prototype today covers only the Rule tab UI m
 **Backend (future):**
 
 - [ ] `Rule` + `rule_mode` (EARN/REDEEM) + JSON `RuleConfig` tables
+- [x] `PointConfig` UI (`point-config` route) — prototype
 - [ ] `PointConfig` single-record API (`GET /point-config`, `PUT /point-config`)
 - [ ] Status state machine + maker-checker endpoints (§4.6)
 - [ ] `RuleApproval` audit trail
@@ -356,7 +360,7 @@ Use when Phase 1 build starts. The prototype today covers only the Rule tab UI m
 - [ ] Earning Rule page: **General** tab + **Rule** tab
 - [x] Shared rule list/drawer refactored to consume unified `Rule` type with `rule_mode`
 - [ ] Wire submit / approve / reject / toggle (replace non-functional buttons in prototype)
-- [ ] Read-only `PointConfig` reference from Redemption Rule if shared-record decision (Gap #7) is adopted
+- [ ] Read-only `PointConfig` reference from Earning Rule and Redemption Rule UIs
 
 - [x] Third-party points nested partner-block UI (working assumption per §4.4.1 — prototype implemented)
 
@@ -384,7 +388,7 @@ Maps architecture concepts to the current `banking-loyalty-back-office` React pr
 | Architecture concept | Prototype location | Status | Phase 1 note |
 |---|---|---|---|
 | Unified Rule Engine (`rule_mode` EARN/REDEEM) | `RuleModule` in `src/App.tsx` + `Rule` in `src/domain/rule.ts` + `rules[]` in `src/data/mockData.ts` | **Done (prototype domain)** | Single `Rule` type with `ruleMode`; two nav routes filter by mode |
-| Tab General `PointConfig` | — | **Missing** | No UI, type, or mock record |
+| Point Configuration (`PointConfig`) | `point-config` route, `PointConfigPage` in `src/App.tsx`, `src/domain/pointConfig.ts` | **Done (prototype UI)** | Session-state edit/save; logo upload non-functional |
 | Rule tab CRUD + lifecycle | `earning-rules`, `redemption-rules` routes | UI mock | List, drawer, search, filters done; no persistence, submit/approve/toggle |
 | Maker-checker RBAC | `canEdit()` in `src/domain/ruleStatus.ts` | UI only | Role toggle; workflow stubs in `src/services/ruleWorkflow.ts` |
 | `RuleConfig` JSON polymorphism | `Rule.config` discriminated union in `src/domain/rule.ts` | Done (prototype) | Type-specific fields nested under `config`; accessors in `ruleConfig.ts` |
@@ -393,6 +397,6 @@ Maps architecture concepts to the current `banking-loyalty-back-office` React pr
 | Third-party points (partner blocks + tiers) | `ThirdPartyPointsRuleFields` in `src/App.tsx` | UI mock (Update 2) | Nested blocks/tiers/caps per §4.4.1; Gap #16 open |
 | Analytics KPIs + data mart | `mockTransactions` + `aggregations.ts` | UI + client aggregation | Phase 3; redemption-by-point and Cost KPIs TBD |
 | Reporting six tabs | `reporting` route | Tabs only | Phase 4 |
-| Point expiry job | — | N/A in prototype | Depends on Tab General semantics (Gap #5 partial) |
+| Point expiry jobs | — | N/A in prototype | Rolling TTL + annual balance reset per §4.1; Phase 2 |
 | API surface (§4.6) | — | Not built | Target contract for Phase 1 backend |
 | Rule lifecycle state machine | Documented in FEATURES.md | Aligned (docs) | UI shows statuses; transitions non-functional |

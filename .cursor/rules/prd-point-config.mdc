@@ -1,0 +1,79 @@
+---
+description: PRD — Point Configuration module (route point-config)
+alwaysApply: false
+globs: src/domain/pointConfig.ts,src/App.tsx
+---
+
+# Point Configuration
+
+**Route:** `point-config` · **Arch phase:** 1 · See `ARCHITECTURE.md` §4.1
+
+## Purpose
+
+Single-record program setup for the loyalty point currency. Operators configure point identity (logo, name) and expiry/reset policy that earning rules, redemption rules, and analytics KPIs reference.
+
+Replaces the original "Earning Rule – Tab General" placement with a dedicated shared module (Gap #7 recommendation).
+
+## Expiry model (confirmed)
+
+**Hybrid — two independent mechanisms:**
+
+1. **Rolling TTL (per earn):** Each earn batch expires `expiredDurationValue` × `expiredDurationUnit` after its earn date (e.g. 12 months from earn).
+2. **Annual balance reset:** On a fixed calendar date each year (`annualBalanceResetMonth` + `annualBalanceResetDay` at `resetTime` WIB), the customer's **entire remaining balance** is zeroed — regardless of individual batch TTL.
+
+Both jobs run in production. Whichever applies first removes points from the balance.
+
+## Key UI
+
+- **Preview card:** Point logo (URL or initials fallback), name, rolling + annual reset summary
+- **Metadata:** Last updated timestamp and `updatedBy`
+- **Edit mode:** Toggle via Edit / Save / Cancel
+- **Point identity:** Point name, logo URL, upload button (non-functional)
+- **Rolling expiry:** `expiredDurationValue` + unit (`monthly` | `quarterly` | `yearly`)
+- **Annual balance reset:** Reset month, reset day, reset time (WIB)
+- **Downstream usage:** Cards for Earning Rule, Redemption Rule, Analytics Dashboard
+
+## Data model
+
+`PointConfig` in `src/domain/pointConfig.ts`:
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `pointLogo` | `string` | Image URL for point currency icon |
+| `pointName` | `string` | Display name (e.g. BNI Poin) |
+| `expiredDurationValue` | `number` | Rolling TTL numeric value |
+| `expiredDurationUnit` | `ExpiredDurationUnit` | monthly, quarterly, yearly |
+| `annualBalanceResetMonth` | `number` | Calendar month (1–12) for annual zero-out |
+| `annualBalanceResetDay` | `number` | Day of month for annual zero-out |
+| `resetTime` | `string` | HH:MM (WIB) when annual reset job runs |
+| `updatedBy` | `string` | Last editor |
+| `updatedAt` | `string` | ISO timestamp |
+
+Mock: `defaultPointConfig` in `src/data/mockData.ts` (default annual reset: 1 January 00:00 WIB)
+
+## API (target, Phase 1)
+
+`GET /point-config` · `PUT /point-config` — single-record read/update
+
+## User flow
+
+1. Sidebar → **Point Configuration**
+2. Review preview and current policy
+3. **Edit configuration** → modify fields
+4. **Save changes** → updates session state (no backend persistence in prototype)
+5. **Cancel** → reverts to last saved state
+
+## Status
+
+| Capability | Status |
+|------------|--------|
+| Form UI + preview | Done (UI) |
+| Edit / save / cancel | Done (session state only) |
+| Logo file upload | Non-functional |
+| Backend `GET/PUT /point-config` | Not started |
+| Read-only reference from rule modules | Not started |
+
+## Open items
+
+- Gap #7: Prototype adopts single shared record via this route
+- Phase 2: Implement rolling TTL expiry job + annual balance reset job as separate scheduled processes

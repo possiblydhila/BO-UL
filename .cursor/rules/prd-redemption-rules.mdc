@@ -12,7 +12,7 @@ globs: src/domain/**,src/services/rule*,src/App.tsx
 
 Configure and review point-redemption rules. Same UX as earning rules with redemption-specific fields. Shares Rule Engine with `ruleMode: "REDEEM"` via `RuleModule`.
 
-**Note:** `PointConfig` (Tab General) lives under Earning Rule route only — redemption route has Rule tab only.
+**Point identity & expiry:** Managed in the shared **Point Configuration** module (`point-config` route) — see `prd-point-config`.
 
 ## Key UI (beyond earning rules)
 
