@@ -70,6 +70,7 @@ import type {
   RuleType,
 } from "./types";
 import { calculatePoints, formatCompact, formatNumber } from "./utils/points";
+import { DateRangeField } from "./components/DateRangeField";
 
 const colors = ["#1570ef", "#12b76a", "#f79009", "#7a5af8", "#f04438", "#06aed4"];
 
@@ -707,6 +708,15 @@ function RuleDrawer({
   onTypeChange: (type: RuleType) => void;
   onClose: () => void;
 }) {
+  const [periodStart, setPeriodStart] = useState("");
+  const [periodEnd, setPeriodEnd] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setPeriodStart(rule?.periodStart ?? "");
+    setPeriodEnd(rule?.periodEnd ?? "");
+  }, [open, rule]);
+
   if (!open) return null;
   const examplePoints = calculatePoints(500000, 100000, 10);
   return (
@@ -727,10 +737,15 @@ function RuleDrawer({
           <div className="grid gap-4">
             <MockInput label="Rule name" value={rule?.name ?? ""} placeholder="Input rule name" />
             <MockInput label="Rule code" value={rule?.code ?? ""} placeholder="EARN-PAY-001" />
-            <div className="grid gap-4 sm:grid-cols-2">
-              <MockInput label="Period start" value={rule?.periodStart ?? ""} placeholder="YYYY-MM-DD" />
-              <MockInput label="Period end" value={rule?.periodEnd ?? ""} placeholder="YYYY-MM-DD" />
-            </div>
+            <DateRangeField
+              label="Rule period"
+              periodStart={periodStart}
+              periodEnd={periodEnd}
+              onChange={(start, end) => {
+                setPeriodStart(start);
+                setPeriodEnd(end);
+              }}
+            />
             {kind === "redemption" && (
               <div className="grid gap-4 sm:grid-cols-2">
                 <MockInput label="Cap type" value={(rule as RedemptionRule | null)?.capType ? formatCapType((rule as RedemptionRule).capType) : "voucher"} />
