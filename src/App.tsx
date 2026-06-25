@@ -37,7 +37,7 @@ import {
   channelOptions,
   cobrandCardTypeOptions,
   dashboardData,
-  earningRules,
+  getRulesByMode,
   maxCapacityTimeframeOptions,
   maxCapacityTypeOptions,
   merchantCategoryOptions,
@@ -45,7 +45,6 @@ import {
   navItems,
   operatorTypeOptions,
   partnerCapTimeframeOptions,
-  redemptionRules,
   reportTabs,
   rewardTypeOptions,
   ruleChannelOptions,
@@ -57,15 +56,24 @@ import {
   targetUserOptions,
   thirdPartyProgramOptions,
 } from "./data/mockData";
+import type { Rule, RuleMode } from "./domain/rule";
+import { formatCapType } from "./domain/rule";
+import type { PersonalEarningConfig, TacticalConfig, TransactionalFields } from "./domain/rule";
+import {
+  asActivityConfig,
+  asPersonalEarningConfig,
+  asTacticalConfig,
+  asThirdPartyConfig,
+  getTransactionalFields,
+} from "./domain/ruleConfig";
+import { canEdit } from "./domain/ruleStatus";
+import { filterRules } from "./services/ruleQueries";
 import type {
   DashboardFilters,
   DistributionPoint,
-  EarningRule,
   KpiCard,
-  RedemptionRule,
   Role,
   RouteKey,
-  RuleBase,
   RuleStatus,
   RuleType,
 } from "./types";
@@ -90,10 +98,6 @@ const typeLabel: Record<RuleType, string> = {
   personal_earning: "Personal Earning",
   third_party_points: "Third Party Points",
 };
-
-function formatCapType(value: RedemptionRule["capType"]) {
-  return value.replace(/_/g, " ");
-}
 
 const defaultFilters: DashboardFilters = {
   startDate: "2026-06-01",
@@ -491,11 +495,7 @@ function DonutChart({ data }: { data: DistributionPoint[] }) {
   );
 }
 
-function canEdit(role: Role, status: RuleStatus) {
-  return role === "employee" ? status === "draft" : status === "in_review" || status === "scheduled";
-}
-
-function SummaryCounters({ rules }: { rules: RuleBase[] }) {
+function SummaryCounters({ rules }: { rules: Rule[] }) {
   const statuses: RuleStatus[] = ["active", "inactive", "expired", "scheduled", "in_review", "draft"];
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
@@ -513,37 +513,29 @@ function SummaryCounters({ rules }: { rules: RuleBase[] }) {
   );
 }
 
-function RuleModule<T extends EarningRule | RedemptionRule>({
+function RuleModule({
   title,
   description,
   rules,
-  kind,
+  ruleMode,
 }: {
   title: string;
   description: string;
-  rules: T[];
-  kind: "earning" | "redemption";
+  rules: Rule[];
+  ruleMode: RuleMode;
 }) {
   const [role, setRole] = useState<Role>("employee");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<RuleStatus | "all">("all");
-  const [drawerRule, setDrawerRule] = useState<T | null>(null);
+  const [drawerRule, setDrawerRule] = useState<Rule | null>(null);
   const [drawerMode, setDrawerMode] = useState<"add" | "edit">("add");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<RuleType>("transactional");
 
-  const filteredRules = useMemo(() => {
-    const lowered = query.trim().toLowerCase();
-    return rules.filter((rule) => {
-      const matchesQuery =
-        !lowered ||
-        rule.name.toLowerCase().includes(lowered) ||
-        rule.code.toLowerCase().includes(lowered) ||
-        rule.id.toLowerCase().includes(lowered);
-      const matchesStatus = status === "all" || rule.status === status;
-      return matchesQuery && matchesStatus;
-    });
-  }, [query, rules, status]);
+  const filteredRules = useMemo(
+    () => filterRules(rules, { mode: ruleMode, status, query }),
+    [query, rules, ruleMode, status],
+  );
 
   function openAdd() {
     setDrawerMode("add");
@@ -552,7 +544,7 @@ function RuleModule<T extends EarningRule | RedemptionRule>({
     setDrawerOpen(true);
   }
 
-  function openEdit(rule: T) {
+  function openEdit(rule: Rule) {
     setDrawerMode("edit");
     setDrawerRule(rule);
     setSelectedType(rule.type);
@@ -634,7 +626,7 @@ function RuleModule<T extends EarningRule | RedemptionRule>({
                 <th className="px-4 py-3">Created time</th>
                 <th className="px-4 py-3">Total CIF</th>
                 <th className="px-4 py-3">Total point</th>
-                {kind === "redemption" && <th className="px-4 py-3">Cap type</th>}
+                {ruleMode === "REDEEM" && <th className="px-4 py-3">Cap type</th>}
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
@@ -656,7 +648,11 @@ function RuleModule<T extends EarningRule | RedemptionRule>({
                   <td className="px-4 py-4 text-slate-600">{rule.createdAt}</td>
                   <td className="px-4 py-4 text-slate-600">{formatNumber(rule.totalCif)}</td>
                   <td className="px-4 py-4 text-slate-600">{formatCompact(rule.totalPoints)}</td>
-                  {kind === "redemption" && <td className="px-4 py-4 text-slate-600">{formatCapType((rule as RedemptionRule).capType)}</td>}
+                  {ruleMode === "REDEEM" && (
+                    <td className="px-4 py-4 text-slate-600">
+                      {rule.redemption ? formatCapType(rule.redemption.capType) : "—"}
+                    </td>
+                  )}
                   <td className="px-4 py-4">
                     <div className="flex justify-end gap-2">
                       {canEdit(role, rule.status) && (
@@ -678,7 +674,7 @@ function RuleModule<T extends EarningRule | RedemptionRule>({
       <RuleDrawer
         open={drawerOpen}
         mode={drawerMode}
-        kind={kind}
+        ruleMode={ruleMode}
         rule={drawerRule}
         selectedType={selectedType}
         onTypeChange={setSelectedType}
@@ -694,7 +690,7 @@ function RuleModule<T extends EarningRule | RedemptionRule>({
 function RuleDrawer({
   open,
   mode,
-  kind,
+  ruleMode,
   rule,
   selectedType,
   onTypeChange,
@@ -702,8 +698,8 @@ function RuleDrawer({
 }: {
   open: boolean;
   mode: "add" | "edit";
-  kind: "earning" | "redemption";
-  rule: EarningRule | RedemptionRule | null;
+  ruleMode: RuleMode;
+  rule: Rule | null;
   selectedType: RuleType;
   onTypeChange: (type: RuleType) => void;
   onClose: () => void;
@@ -725,7 +721,7 @@ function RuleDrawer({
       <aside className="absolute right-0 top-0 flex h-full w-full max-w-xl flex-col bg-white shadow-2xl">
         <div className="flex items-start justify-between border-b border-slate-200 p-6">
           <div>
-            <p className="text-sm font-semibold text-brand-700">{kind === "earning" ? "Earning Rule" : "Redemption Rule"}</p>
+            <p className="text-sm font-semibold text-brand-700">{ruleMode === "EARN" ? "Earning Rule" : "Redemption Rule"}</p>
             <h2 className="mt-1 text-xl font-semibold text-slate-950">{mode === "add" ? "Add rule" : `Edit ${rule?.code}`}</h2>
             <p className="mt-1 text-sm text-slate-500">Conditional fields follow the CSV draft for rule type behavior.</p>
           </div>
@@ -746,12 +742,15 @@ function RuleDrawer({
                 setPeriodEnd(end);
               }}
             />
-            {kind === "redemption" && (
+            {ruleMode === "REDEEM" && (
               <div className="grid gap-4 sm:grid-cols-2">
-                <MockInput label="Cap type" value={(rule as RedemptionRule | null)?.capType ? formatCapType((rule as RedemptionRule).capType) : "voucher"} />
-                <MockInput label="Value point percentage" value={`${(rule as RedemptionRule | null)?.valuePointPercentage ?? 100}`} />
-                <MockInput label="Value min" value={`${(rule as RedemptionRule | null)?.valueMin ?? 50000}`} />
-                <MockInput label="Value max" value={`${(rule as RedemptionRule | null)?.valueMax ?? 500000}`} />
+                <MockInput
+                  label="Cap type"
+                  value={rule?.redemption?.capType ? formatCapType(rule.redemption.capType) : "voucher"}
+                />
+                <MockInput label="Value point percentage" value={`${rule?.redemption?.valuePointPercentage ?? 100}`} />
+                <MockInput label="Value min" value={`${rule?.redemption?.valueMin ?? 50000}`} />
+                <MockInput label="Value max" value={`${rule?.redemption?.valueMax ?? 500000}`} />
               </div>
             )}
             <SelectField
@@ -760,7 +759,7 @@ function RuleDrawer({
               options={Object.entries(typeLabel).map(([value, label]) => ({ value, label }))}
               onChange={(type) => onTypeChange(type as RuleType)}
             />
-            <ConditionalRuleFields selectedType={selectedType} kind={kind} />
+            <ConditionalRuleFields rule={rule} selectedType={selectedType} ruleMode={ruleMode} />
             <div className="rounded-lg border border-brand-100 bg-brand-50 p-4 text-sm leading-6 text-slate-700">
               <p className="font-semibold text-slate-950">Point calculation example</p>
               <p className="mt-1">Earned/Redeem Points = (500.000 / 100.000) x 10 = {examplePoints} poin.</p>
@@ -875,21 +874,24 @@ function TargetUserRewardFields() {
   );
 }
 
-function TacticalRuleFields() {
+function TacticalRuleFields({ tactical }: { tactical?: TacticalConfig }) {
   return (
     <>
-      <MockInput label="Campaign/event name" value="HUT BNI" />
+      <MockInput label="Campaign/event name" value={tactical?.campaignName ?? "HUT BNI"} />
       <TargetUserRewardFields />
     </>
   );
 }
 
-function PersonalEarningRuleFields() {
+function PersonalEarningRuleFields({ personal }: { personal?: PersonalEarningConfig }) {
   return (
     <>
-      <MockInput label="Type" value="birthday" />
+      <MockInput label="Type" value={personal?.personalType ?? "birthday"} />
       <TargetUserRewardFields />
-      <MockInput label="Receive point" value="100 point" />
+      <MockInput
+        label="Receive point"
+        value={personal?.receivePoint != null ? `${personal.receivePoint} point` : "100 point"}
+      />
     </>
   );
 }
@@ -1176,9 +1178,12 @@ function PartnerBlockCard({
   );
 }
 
-function ThirdPartyPointsRuleFields() {
+function ThirdPartyPointsRuleFields({ rule }: { rule: Rule | null }) {
+  const thirdParty = rule ? asThirdPartyConfig(rule) : undefined;
   const [cardTypes, setCardTypes] = useState<string[]>(
-    cobrandCardTypeOptions.map((option) => option.value),
+    thirdParty?.cardTypes?.length
+      ? thirdParty.cardTypes
+      : cobrandCardTypeOptions.map((option) => option.value),
   );
   const [partnerBlocks, setPartnerBlocks] = useState<PartnerBlock[]>(createDefaultPartnerBlocks);
 
@@ -1235,15 +1240,27 @@ function ThirdPartyPointsRuleFields() {
   );
 }
 
-function TransactionalRuleFields() {
-  const [sourceSystem, setSourceSystem] = useState(ruleSourceSystemOptions[0].value);
-  const [transactionType, setTransactionType] = useState(ruleTransactionTypeOptions[0].value);
-  const [merchantCategory, setMerchantCategory] = useState(merchantCategoryOptions[0].value);
-  const [merchantName, setMerchantName] = useState(merchantNameOptions[0].value);
-  const [cardType, setCardType] = useState(cardTypeOptions[0].value);
-  const [channel, setChannel] = useState<string>(ruleChannelOptions[0].value);
-  const [maxCapacityType, setMaxCapacityType] = useState(maxCapacityTypeOptions[0].value);
-  const [maxCapacityTimeframe, setMaxCapacityTimeframe] = useState(maxCapacityTimeframeOptions[0].value);
+function TransactionalRuleFields({ transactional }: { transactional?: TransactionalFields }) {
+  const [sourceSystem, setSourceSystem] = useState(
+    transactional?.sourceSystem ?? ruleSourceSystemOptions[0].value,
+  );
+  const [transactionType, setTransactionType] = useState(
+    transactional?.transactionType ?? ruleTransactionTypeOptions[0].value,
+  );
+  const [merchantCategory, setMerchantCategory] = useState(
+    transactional?.merchantCategory ?? merchantCategoryOptions[0].value,
+  );
+  const [merchantName, setMerchantName] = useState(
+    transactional?.merchantName ?? merchantNameOptions[0].value,
+  );
+  const [cardType, setCardType] = useState(transactional?.cardType ?? cardTypeOptions[0].value);
+  const [channel, setChannel] = useState<string>(transactional?.channel ?? ruleChannelOptions[0].value);
+  const [maxCapacityType, setMaxCapacityType] = useState(
+    transactional?.maxCapacityType ?? maxCapacityTypeOptions[0].value,
+  );
+  const [maxCapacityTimeframe, setMaxCapacityTimeframe] = useState(
+    transactional?.maxCapacityTimeframe ?? maxCapacityTimeframeOptions[0].value,
+  );
 
   return (
     <>
@@ -1274,9 +1291,12 @@ function TransactionalRuleFields() {
       <SelectField label="Card type" value={cardType} options={cardTypeOptions} onChange={setCardType} />
       <SelectField label="Channel" value={channel} options={ruleChannelOptions} onChange={setChannel} />
       <MockInput label="Transaction amount" value="500000" />
-      <MockInput label="Conversion unit" value="100000" />
-      <MockInput label="Multiplier" value="10" />
-      <MockInput label="Max capacity" value="2000000 point" />
+      <MockInput label="Conversion unit" value={transactional?.conversionUnit?.toString() ?? "100000"} />
+      <MockInput label="Multiplier" value={transactional?.multiplier?.toString() ?? "10"} />
+      <MockInput
+        label="Max capacity"
+        value={transactional?.maxCapacity != null ? `${transactional.maxCapacity} point` : "2000000 point"}
+      />
       <SelectField
         label="Type max capacity"
         value={maxCapacityType}
@@ -1293,13 +1313,25 @@ function TransactionalRuleFields() {
   );
 }
 
-function ConditionalRuleFields({ selectedType, kind }: { selectedType: RuleType; kind: "earning" | "redemption" }) {
+function ConditionalRuleFields({
+  rule,
+  selectedType,
+  ruleMode,
+}: {
+  rule: Rule | null;
+  selectedType: RuleType;
+  ruleMode: RuleMode;
+}) {
   if (selectedType === "activity") {
+    const activity = rule ? asActivityConfig(rule) : undefined;
     return (
       <div className="grid gap-4 sm:grid-cols-2">
-        <MockInput label="Activity type" value="aktivasi wondr" />
+        <MockInput label="Activity type" value={activity?.activityType ?? "aktivasi wondr"} />
         <MockInput label="Amount field" placeholder="Active for balance increase activity" />
-        <MockInput label={kind === "earning" ? "Receive point" : "Redeem point"} value="100 point" />
+        <MockInput
+          label={ruleMode === "EARN" ? "Receive point" : "Redeem point"}
+          value={activity?.receivePoint != null ? `${activity.receivePoint} point` : "100 point"}
+        />
       </div>
     );
   }
@@ -1307,23 +1339,27 @@ function ConditionalRuleFields({ selectedType, kind }: { selectedType: RuleType;
   if (selectedType === "third_party_points") {
     return (
       <div className="grid gap-4 sm:grid-cols-2">
-        <ThirdPartyPointsRuleFields />
+        <ThirdPartyPointsRuleFields rule={rule} />
       </div>
     );
   }
 
   if (selectedType === "personal_earning") {
+    const personal = rule ? asPersonalEarningConfig(rule) : undefined;
     return (
       <div className="grid gap-4 sm:grid-cols-2">
-        <PersonalEarningRuleFields />
+        <PersonalEarningRuleFields personal={personal} />
       </div>
     );
   }
 
+  const tactical = rule ? asTacticalConfig(rule) : undefined;
+  const transactional = rule ? getTransactionalFields(rule) : undefined;
+
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      {selectedType === "tactical" && <TacticalRuleFields />}
-      <TransactionalRuleFields />
+      {selectedType === "tactical" && <TacticalRuleFields tactical={tactical} />}
+      <TransactionalRuleFields transactional={transactional} />
     </div>
   );
 }
@@ -1441,16 +1477,16 @@ function App() {
             <RuleModule
               title="Earning Rule"
               description="Konfigurasi aturan, skema, dan parameter perolehan poin pengguna."
-              rules={earningRules}
-              kind="earning"
+              rules={getRulesByMode("EARN")}
+              ruleMode="EARN"
             />
           )}
           {route === "redemption-rules" && (
             <RuleModule
               title="Redemption Rule"
               description="Konfigurasi aturan, skema, dan parameter penukaran poin pengguna."
-              rules={redemptionRules}
-              kind="redemption"
+              rules={getRulesByMode("REDEEM")}
+              ruleMode="REDEEM"
             />
           )}
           {route === "users" && <PlaceholderPage title="User" description="Daftar, profil, dan informasi menyeluruh terkait pengguna sistem loyalty." />}

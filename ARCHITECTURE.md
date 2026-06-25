@@ -302,7 +302,7 @@ This section consolidates architecture gaps with dashboard audit items from [FEA
 | 1 | Cardlink channel codes are blank in the source spec (only Saving's channels — API, Wondr, SMS, BNI Direct, Mbank — have codes). | Open | Architecture | Need list before channel dimension can be finalized. |
 | 2 | Merchant category is "BNI doesn't have this data, just make something up" — confirm whether this is a real near-term data gap. | Open | Architecture | Several KPIs depend on category-level reporting. |
 | 3 | Redemption Rule worked example uses "Earned Points" terminology in 3 of 4 occurrences — confirm sign/direction semantics for redemption. | Open | Architecture | Affects ledger sign conventions. |
-| 4 | `RULE_TAB_ID` and `SOURCE_TYPE_ID` appear in Redemption Rule list columns with no definition elsewhere. | Open | Architecture + prototype | Clarify FK to lookup tables vs. legacy columns to drop. Prototype shows these on `RedemptionRule` in `src/types.ts` with no UI explanation. |
+| 4 | `RULE_TAB_ID` and `SOURCE_TYPE_ID` appear in Redemption Rule list columns with no definition elsewhere. | Open | Architecture + prototype | Clarify FK to lookup tables vs. legacy columns to drop. Prototype stores these as optional fields on `RedemptionHeader` in `src/domain/rule.ts`. |
 | 5 | Point-expiry policy configuration. | **Partially resolved** | Architecture | Tab General adds `expired_duration` + `reset_time`. **Still open:** rolling TTL per earn-transaction vs. fixed calendar reset governed by `reset_time`. Confirm before Phase 2 evaluation engine and expiry job. |
 | 6 | Third-party points tier structure — nested partner blocks and tier tables. | **Working assumption** | Architecture (Update 2) | Structure documented in §4.4.1. Prototype drawer implements nested UI. Await formal business sign-off before Phase 2 eval engine. |
 | 16 | Per-block `card_type` subset — can a partner block apply to fewer cards than the rule header? | Open | Architecture (Update 2) | Example assumes all blocks use full header card list. |
@@ -354,7 +354,7 @@ Use when Phase 1 build starts. The prototype today covers only the Rule tab UI m
 **Frontend (future, against APIs):**
 
 - [ ] Earning Rule page: **General** tab + **Rule** tab
-- [ ] Shared rule list/drawer refactored to consume unified `Rule` type with `rule_mode`
+- [x] Shared rule list/drawer refactored to consume unified `Rule` type with `rule_mode`
 - [ ] Wire submit / approve / reject / toggle (replace non-functional buttons in prototype)
 - [ ] Read-only `PointConfig` reference from Redemption Rule if shared-record decision (Gap #7) is adopted
 
@@ -383,13 +383,13 @@ Maps architecture concepts to the current `banking-loyalty-back-office` React pr
 
 | Architecture concept | Prototype location | Status | Phase 1 note |
 |---|---|---|---|
-| Unified Rule Engine (`rule_mode` EARN/REDEEM) | `RuleModule` in `src/App.tsx` + split `EarningRule` / `RedemptionRule` in `src/types.ts` | Partial | UI shared via `kind: "earning" \| "redemption"`; domain model not unified |
+| Unified Rule Engine (`rule_mode` EARN/REDEEM) | `RuleModule` in `src/App.tsx` + `Rule` in `src/domain/rule.ts` + `rules[]` in `src/data/mockData.ts` | **Done (prototype domain)** | Single `Rule` type with `ruleMode`; two nav routes filter by mode |
 | Tab General `PointConfig` | — | **Missing** | No UI, type, or mock record |
 | Rule tab CRUD + lifecycle | `earning-rules`, `redemption-rules` routes | UI mock | List, drawer, search, filters done; no persistence, submit/approve/toggle |
-| Maker-checker RBAC | `canEdit()` in `src/App.tsx` | UI only | Role toggle; no server enforcement |
-| `RuleConfig` JSON polymorphism | Flat optional fields on rule types | Simplified | Adequate for prototype; diverges from §3 recommendation |
-| Redemption `CAP_TYPE` + value fields | `RedemptionRule.capType`, `valuePointPercentage`, etc. | Done (UI) | Present in drawer + table column |
-| `ruleTabId` / `sourceTypeId` | `RedemptionRule` type + mock data | Present, undefined | Gap #4 — needs business clarification |
+| Maker-checker RBAC | `canEdit()` in `src/domain/ruleStatus.ts` | UI only | Role toggle; workflow stubs in `src/services/ruleWorkflow.ts` |
+| `RuleConfig` JSON polymorphism | `Rule.config` discriminated union in `src/domain/rule.ts` | Done (prototype) | Type-specific fields nested under `config`; accessors in `ruleConfig.ts` |
+| Redemption `CAP_TYPE` + value fields | `Rule.redemption` (`RedemptionHeader`) | Done (UI) | Present in drawer + table column when `ruleMode === "REDEEM"` |
+| `ruleTabId` / `sourceTypeId` | `RedemptionHeader` in mock data | Present, undefined | Gap #4 — needs business clarification |
 | Third-party points (partner blocks + tiers) | `ThirdPartyPointsRuleFields` in `src/App.tsx` | UI mock (Update 2) | Nested blocks/tiers/caps per §4.4.1; Gap #16 open |
 | Analytics KPIs + data mart | `dashboardData` in `src/data/mockData.ts` | UI only | Phase 3; formulas still open (FEATURES audit panel) |
 | Reporting six tabs | `reporting` route | Tabs only | Phase 4 |

@@ -21,7 +21,7 @@ Feature reference for the `banking-loyalty-back-office` prototype. Use this docu
 
 **Architecture:** For system architecture, domain model, phased backend plan, and prototype gap analysis, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
-**Last updated:** 2025-06-25 (aligned with ARCHITECTURE.md)
+**Last updated:** 2026-06-25 11:55 WIB (`f804673`)
 
 **Prototype constraints:**
 
@@ -39,7 +39,7 @@ High-level status vs [ARCHITECTURE.md](ARCHITECTURE.md) build phases. **UI** = p
 | Module | Arch. phase | UI | Data | Backend | Blockers / notes |
 |--------|-------------|----|------|---------|------------------|
 | Earning Rule — Tab General (`PointConfig`) | 1 | — | — | — | Gap #7: shared vs duplicated record TBD |
-| Earning Rule — Rule tab | 1 | Done | Mock | — | Submit/approve/toggle non-functional |
+| Earning Rule — Rule tab | 1 | Done | Mock | — | Date range picker for period; submit/approve/toggle non-functional |
 | Redemption Rule | 1 | Done | Mock | — | Shared `RuleModule`; Gap #4 on `ruleTabId`/`sourceTypeId` |
 | Analytics Dashboard | 3 | Done | Mock | — | KPI formulas open — [§9 gaps #8–15](ARCHITECTURE.md#9-gaps--open-questions-to-resolve-before-build) |
 | Reporting | 4 | Tabs only | — | — | Six tabs shell; no report tables |
@@ -190,7 +190,7 @@ Configure and review point-earning rules. Supports role-based editing and a full
 - **Add rule drawer:** Side panel with conditional fields
 - **Export:** CSV / XLSX buttons (non-functional)
 
-**Mock data:** 6 earning rules in `earningRules` covering all rule types and statuses.
+**Mock data:** 6 earning rules in `rules` (filtered by `ruleMode: "EARN"`) covering all rule types and statuses.
 
 ### User Flows
 
@@ -215,7 +215,7 @@ Configure and review point-earning rules. Supports role-based editing and a full
 ### Permissions
 
 ```typescript
-// src/App.tsx — canEdit()
+// src/domain/ruleStatus.ts — canEdit()
 employee  → edit draft only
 approver  → edit in_review, scheduled
 ```
@@ -229,10 +229,11 @@ approver  → edit in_review, scheduled
 | `status` | `RuleStatus \| "all"` | Status filter |
 | `drawerOpen` | `boolean` | Drawer visibility |
 | `drawerMode` | `"add" \| "edit"` | Drawer mode |
-| `drawerRule` | `EarningRule \| null` | Rule being edited |
+| `drawerRule` | `Rule \| null` | Rule being edited |
 | `selectedType` | `RuleType` | Active rule type in drawer |
+| `periodStart` / `periodEnd` | `string` | Rule period in drawer (`DateRangeField`; synced on open) |
 
-**Data:** `earningRules` from `src/data/mockData.ts`, type `EarningRule` from `src/types.ts`
+**Data:** `getRulesByMode("EARN")` from unified `rules` in `src/data/mockData.ts`, type `Rule` from `src/domain/rule.ts`
 
 ### Status
 
@@ -242,6 +243,7 @@ approver  → edit in_review, scheduled
 | Tab Rule — list / search / filter | Done |
 | Tab Rule — role-gated edit | Done (UI) |
 | Tab Rule — add/edit drawer | Done (UI) |
+| Tab Rule — period date range picker | Done (UI) — `DateRangeField` |
 | Tab Rule — submit / save | Non-functional |
 | Tab Rule — inactive toggle | Non-functional |
 | Tab Rule — export | Non-functional |
@@ -268,34 +270,34 @@ No `PointConfig` type, mock record, or UI exists in the prototype yet.
 
 ### Purpose
 
-Configure and review point-redemption rules. Same UX as earning rules with redemption-specific fields. Architecturally, earning and redemption share one Rule Engine with a `rule_mode` flag (EARN/REDEEM) — the prototype reflects this via shared `RuleModule` but keeps split types (`EarningRule` / `RedemptionRule`). See [ARCHITECTURE.md §1](ARCHITECTURE.md#1-scope--reading-of-the-source-spec).
+Configure and review point-redemption rules. Same UX as earning rules with redemption-specific fields. Architecturally, earning and redemption share one Rule Engine with a `rule_mode` flag (EARN/REDEEM) — the prototype uses shared `RuleModule` with `ruleMode: "EARN" | "REDEEM"` and a unified `Rule` type. See [ARCHITECTURE.md §1](ARCHITECTURE.md#1-scope--reading-of-the-source-spec).
 
 ### Key UI Elements
 
 Same as Earning Rule Management, plus:
 
-- **Extra table column:** Cap type (`capType` on `RedemptionRule`)
+- **Extra table column:** Cap type (`rule.redemption.capType`)
 - **Drawer fields:** Cap type, value point percentage, value min, value max
 
-**Open question:** `ruleTabId` and `sourceTypeId` appear on `RedemptionRule` mock data with no definition in the source spec — flagged as Gap #4 in [ARCHITECTURE.md §9](ARCHITECTURE.md#9-gaps--open-questions-to-resolve-before-build).
+**Open question:** `ruleTabId` and `sourceTypeId` appear on redemption mock data (`rule.redemption`) with no definition in the source spec — flagged as Gap #4 in [ARCHITECTURE.md §9](ARCHITECTURE.md#9-gaps--open-questions-to-resolve-before-build).
 
-**Cap types** (`RedemptionRule.capType`):
+**Cap types** (`RedemptionHeader.capType`):
 
 `cashback`, `discount`, `bill_payment`, `donasi`, `point_pihak_ketiga`, `kupon_undian`, `voucher`, `e_wallet`, `lelang`, `barang`, `annual_fee`
 
-**Mock data:** 5 redemption rules in `redemptionRules`.
+**Mock data:** 5 redemption rules in `rules` (filtered by `ruleMode: "REDEEM"`).
 
 ### User Flow
 
-Same as earning rules (employee and approver flows). Redemption-specific drawer fields appear when `kind === "redemption"`.
+Same as earning rules (employee and approver flows). Redemption-specific drawer fields appear when `ruleMode === "REDEEM"`.
 
 ### Permissions
 
-Identical to earning rules (`canEdit` function).
+Identical to earning rules (`canEdit` in `src/domain/ruleStatus.ts`).
 
 ### State & Data
 
-Same state shape as `RuleModule` with `kind: "redemption"`. Data from `redemptionRules`, type `RedemptionRule`.
+Same state shape as `RuleModule` with `ruleMode: "REDEEM"`. Data from `getRulesByMode("REDEEM")`, type `Rule`.
 
 ### Status
 
@@ -314,7 +316,7 @@ Side panel for creating or editing rules. Fields change based on selected `RuleT
 ### Base Fields (all types)
 
 - Rule name, Rule code
-- Period start, Period end
+- **Rule period** — single `DateRangeField` (`src/components/DateRangeField.tsx`) bound to `periodStart` / `periodEnd`; dual-month calendar popover with range highlight, Apply/Clear; synced from rule on drawer open (add/edit)
 - Rule type selector
 
 ### Redemption-only Fields
@@ -489,34 +491,38 @@ type DashboardData = {
 ### Rules
 
 ```typescript
+type RuleMode = "EARN" | "REDEEM"
 type RuleStatus = "draft" | "in_review" | "scheduled" | "active" | "inactive" | "expired"
 type Role = "employee" | "approver"
 type RuleType = "transactional" | "activity" | "tactical" | "personal_earning" | "third_party_points"
 
-type RuleBase = {
+// src/domain/rule.ts
+type Rule = {
   id: string; code: string; name: string;
+  ruleMode: RuleMode;
   periodStart: string; periodEnd: string;
-  type: RuleType; status: RuleStatus; createdAt: string;
+  type: RuleType; status: RuleStatus;
+  createdAt: string; updatedAt: string;
   totalCif: number; totalPoints: number;
-  sourceSystem?: "saving" | "cardlink";
-  transactionType?: Exclude<TransactionType, "all">;
-  channel?: Exclude<Channel, "all">;
+  config: RuleConfig;           // polymorphic per rule_type
+  redemption?: RedemptionHeader; // present when ruleMode === "REDEEM"
 }
 
-type EarningRule = RuleBase & {
-  conversionUnit?: number; multiplier?: number; maxCapacity?: number;
-  activityType?: string; rewardType?: "bonus_point" | "transactional";
-}
-
-type RedemptionRule = RuleBase & {
-  capType: "cashback" | "discount" | "bill_payment" | "donasi" | "point_pihak_ketiga"
-    | "kupon_undian" | "voucher" | "e_wallet" | "lelang" | "barang" | "annual_fee";
+type RedemptionHeader = {
+  capType: CapType;
   valuePointPercentage: number; valueMin: number; valueMax: number;
-  ruleTabId: string; sourceTypeId: string; updatedAt: string;
+  ruleTabId?: string; sourceTypeId?: string;
 }
+
+type RuleConfig =
+  | { ruleType: "transactional"; sourceSystem?; conversionUnit?; multiplier?; ... }
+  | { ruleType: "activity"; activityType?; receivePoint?; ... }
+  | { ruleType: "tactical"; campaignName?; rewardType?; transactional?; ... }
+  | { ruleType: "personal_earning"; personalType?; rewardType?; receivePoint?; ... }
+  | { ruleType: "third_party_points"; cardTypes: string[]; partnerBlocks: PartnerBlock[] }
 ```
 
-**Architecture target (not in prototype yet):** unified `Rule` with `rule_mode: "EARN" | "REDEEM"` and polymorphic `RuleConfig` JSON — see [ARCHITECTURE.md §3](ARCHITECTURE.md#3-core-domain-model). `PointConfig` type and API shape documented there; no `src/types.ts` entry yet.
+Unified engine modules: `src/domain/rule.ts`, `src/domain/ruleStatus.ts`, `src/domain/ruleConfig.ts`, `src/services/ruleQueries.ts`, `src/services/ruleWorkflow.ts`. Mock data: `rules[]` + `getRulesByMode()` in `src/data/mockData.ts`. See [ARCHITECTURE.md §3](ARCHITECTURE.md#3-core-domain-model). `PointConfig` type and API shape documented there; no `src/types.ts` entry yet.
 
 ### Enums
 
@@ -560,9 +566,10 @@ From `auditNotes` in `src/data/mockData.ts`. These items need stakeholder resolu
 | Area | Phase | UI | Data | Persistence | Backend API | Notes |
 |------|-------|----|------|-------------|-------------|-------|
 | Dashboard | 3 | Done | Mock | None | — | Filters partially simulated |
-| Earning rules — Rule tab | 1 | Done | Mock | None | — | Shared `RuleModule` |
+| Earning rules — Rule tab | 1 | Done | Mock | None | — | Shared `RuleModule`; `ruleMode=EARN`; unified `rules[]` |
+| Rule drawer — period picker | 1 | Done | Mock | None | — | `src/components/DateRangeField.tsx` |
 | Earning rules — Tab General | 1 | — | — | — | — | `PointConfig` not started |
-| Redemption rules | 1 | Done | Mock | None | — | `capType` + value fields in UI |
+| Redemption rules | 1 | Done | Mock | None | — | `ruleMode=REDEEM`; `redemption` header in unified `Rule` |
 | Third-party points drawer | 1 | Done | Mock | None | — | Nested partner blocks per ARCH §4.4.1 (Update 2) |
 | PointConfig API | 1 | — | — | — | — | `GET/PUT /point-config` per ARCH §4.6 |
 | Rule Engine API | 1 | — | — | — | — | CRUD + maker-checker per ARCH §4.6 |
@@ -577,6 +584,19 @@ Full prototype-vs-architecture mapping: [ARCHITECTURE.md §12](ARCHITECTURE.md#1
 
 ---
 
+## Changes Tracking
+
+Timestamped log of prototype changes. Git commit hash included when available.
+
+| Timestamp (WIB) | Commit | Area | Change |
+|-----------------|--------|------|--------|
+| 2026-06-25 14:00 | — | Unified Rule Engine | Merged `EarningRule`/`RedemptionRule` into single `Rule` with `ruleMode` (EARN/REDEEM) and polymorphic `RuleConfig`. Added `src/domain/rule.ts`, `ruleStatus.ts`, `ruleConfig.ts`, `src/services/ruleQueries.ts`, `ruleWorkflow.ts`. Mock data consolidated to `rules[]` + `getRulesByMode()`. `RuleModule`/`RuleDrawer` use `ruleMode` instead of `kind`. |
+| 2026-06-25 11:55 | `f804673` | Earning / Redemption rule drawer | Replaced Period start/end text placeholders with **Rule period** `DateRangeField` — click-to-open dual-month range calendar, Apply/Clear, controlled `periodStart`/`periodEnd` state in `RuleDrawer`. Added `src/components/DateRangeField.tsx`. Fixed `postcss.config.js` ESM plugin imports. |
+| 2026-06-25 11:25 | `31d9cf1` | Rule drawer — conditional fields | Third-party points nested **Partner Earning Blocks** (tier table + per-block caps). Personal earning reuses target-user/reward fields. Documented in ARCHITECTURE.md §4.4.1. |
+| 2026-06-25 11:00 | `b2cfdd6` | Docs + rule drawer | Added `ARCHITECTURE.md`. Transactional/tactical dropdowns for source system, transaction type, merchant, card, channel, caps. Tactical/personal earning target-user CSV upload UI. |
+
+---
+
 ## Maintenance
 
 Update this file when:
@@ -587,14 +607,21 @@ Update this file when:
 - Backend integration changes flows, state, or data models
 - Non-functional actions become wired up (export, drill-down, CRUD persistence)
 - Tab General (`PointConfig`) is implemented or architecture gaps in §9 are resolved
+- Any shipped UI or flow change — append a row to [Changes Tracking](#changes-tracking) with timestamp and commit hash
 
 **Key files:**
 
 | File | Role |
 |------|------|
-| `FEATURES.md` | Prototype feature tracking, UI flows, implementation status |
+| `FEATURES.md` | Prototype feature tracking, UI flows, implementation status, change log |
 | `ARCHITECTURE.md` | System architecture, domain model, phases, gaps, API contracts |
+| `src/domain/rule.ts` | Unified `Rule`, `RuleConfig`, `RedemptionHeader` types |
+| `src/domain/ruleStatus.ts` | Status labels, `canEdit`, transition guards |
+| `src/domain/ruleConfig.ts` | Config defaults and accessors per rule type |
+| `src/services/ruleQueries.ts` | `filterRules`, `summarizeByStatus`, `getRulesByMode` |
+| `src/services/ruleWorkflow.ts` | Submit/approve/reject/toggle stubs |
 | `src/App.tsx` | Shell, routing, all pages and UI |
-| `src/types.ts` | Prototype domain type definitions |
+| `src/components/DateRangeField.tsx` | Rule period date range picker (drawer) |
+| `src/types.ts` | Shared enums and dashboard types; re-exports `Rule` from domain |
 | `src/data/mockData.ts` | Static data, nav config, audit notes |
 | `src/utils/points.ts` | Point math and formatting |

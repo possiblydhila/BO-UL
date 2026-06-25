@@ -88,47 +88,4 @@ export type DashboardData = {
   campaigns: CampaignSummary[];
 };
 
-export type RuleBase = {
-  id: string;
-  code: string;
-  name: string;
-  periodStart: string;
-  periodEnd: string;
-  type: RuleType;
-  status: RuleStatus;
-  createdAt: string;
-  totalCif: number;
-  totalPoints: number;
-  sourceSystem?: Exclude<SourceSystem, "all">;
-  transactionType?: Exclude<TransactionType, "all">;
-  channel?: Exclude<Channel, "all">;
-};
-
-export type EarningRule = RuleBase & {
-  conversionUnit?: number;
-  multiplier?: number;
-  maxCapacity?: number;
-  activityType?: string;
-  rewardType?: "bonus_point" | "transactional";
-};
-
-export type RedemptionRule = RuleBase & {
-  capType:
-    | "cashback"
-    | "discount"
-    | "bill_payment"
-    | "donasi"
-    | "point_pihak_ketiga"
-    | "kupon_undian"
-    | "voucher"
-    | "e_wallet"
-    | "lelang"
-    | "barang"
-    | "annual_fee";
-  valuePointPercentage: number;
-  valueMin: number;
-  valueMax: number;
-  ruleTabId: string;
-  sourceTypeId: string;
-  updatedAt: string;
-};
+export type { CapType, RedemptionHeader, Rule, RuleConfig, RuleMode } from "./domain/rule";
