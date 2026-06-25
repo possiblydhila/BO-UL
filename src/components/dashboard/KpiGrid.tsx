@@ -44,9 +44,9 @@ function Sparkline({ data, trend }: { data: number[]; trend: KpiTrend }) {
 export function KpiCard({ item }: { item: ComputedKpi | TbdKpi }) {
   if ("status" in item && item.status === "tbd") {
     return (
-      <article className="surface flex min-h-[142px] flex-col justify-between border-2 border-dashed border-slate-300 bg-slate-50 p-5">
+      <article className="surface flex min-h-[142px] flex-col justify-between border-2 border-dashed border-primary bg-secondary p-5">
         <div>
-          <p className="text-sm font-medium text-slate-500">{item.label}</p>
+          <p className="text-sm font-medium text-quaternary">{item.label}</p>
           <p className="mt-2 text-lg font-semibold text-slate-400">Definition pending</p>
         </div>
         <p className="text-sm text-slate-400">{item.detail}</p>
@@ -58,11 +58,11 @@ export function KpiCard({ item }: { item: ComputedKpi | TbdKpi }) {
   return (
     <article className="surface flex min-h-[142px] flex-col justify-between p-5">
       <div>
-        <p className="text-sm font-medium text-slate-600">{kpi.label}</p>
-        <p className="mt-2 text-2xl font-semibold tabular-nums text-slate-950">{kpi.value}</p>
+        <p className="text-sm font-medium text-tertiary">{kpi.label}</p>
+        <p className="mt-2 text-2xl font-semibold tabular-nums text-primary">{kpi.value}</p>
       </div>
       <div>
-        <p className="text-sm text-slate-500">{kpi.detail}</p>
+        <p className="text-sm text-quaternary">{kpi.detail}</p>
         {kpi.sparkline && kpi.sparkline.length > 0 && (
           <Sparkline data={kpi.sparkline} trend={kpi.trend} />
         )}
@@ -80,7 +80,7 @@ export function KpiSection({
 }) {
   return (
     <section>
-      <h2 className="mb-3 text-base font-semibold text-slate-950">{title}</h2>
+      <h2 className="mb-3 text-base font-semibold text-primary">{title}</h2>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {items.map((item) => (
           <KpiCard key={item.label} item={item} />

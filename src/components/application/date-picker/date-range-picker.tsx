@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo, useState } from "react";
 import { endOfMonth, endOfWeek, getLocalTimeZone, startOfMonth, startOfWeek, today } from "@internationalized/date";
 import { useControlledState } from "@react-stately/utils";

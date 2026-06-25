@@ -1,4 +1,4 @@
-import { Filter } from "lucide-react";
+import { FilterFunnel01 } from "@untitledui/icons";
 import { channelOptions, savingTransactionTypeOptions, sourceSystemOptions } from "../../data/mockData";
 import type { DashboardFilters } from "../../types";
 import { DateField, SelectField } from "./fields";
@@ -14,10 +14,10 @@ export function FilterBar({
 
   return (
     <section className="surface p-5">
-      <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-950">
-        <Filter className="h-4 w-4 text-brand-600" />
+      <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-primary">
+        <FilterFunnel01 className="size-4 text-brand-tertiary" />
         Filter dashboard
-        <span className="ml-auto text-xs font-medium text-slate-500">All filters apply globally</span>
+        <span className="ml-auto text-xs font-medium text-quaternary">All filters apply globally</span>
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <DateField

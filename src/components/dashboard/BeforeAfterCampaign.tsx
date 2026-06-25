@@ -29,8 +29,8 @@ export function BeforeAfterCampaign({
     <section className="surface p-5">
       <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h3 className="text-base font-semibold text-slate-950">Before vs. after campaign</h3>
-          <p className="mt-1 text-sm text-slate-500">
+          <h3 className="text-base font-semibold text-primary">Before vs. after campaign</h3>
+          <p className="mt-1 text-sm text-quaternary">
             Points earned in N days before vs. after campaign start. Default window: 14 days.
           </p>
         </div>
@@ -41,23 +41,23 @@ export function BeforeAfterCampaign({
             options={campaigns.map((c) => ({ value: c.id, label: c.name }))}
             onChange={onCampaignChange}
           />
-          <label className="text-sm font-medium text-slate-700">
+          <label className="text-sm font-medium text-secondary">
             <span className="mb-1.5 block">Window (days)</span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="focus-ring flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary bg-primary text-secondary hover:bg-secondary"
                 onClick={() => onWindowDaysChange(Math.max(1, windowDays - 1))}
                 aria-label="Decrease window"
               >
                 −
               </button>
-              <span className="min-w-[2rem] text-center text-sm font-semibold tabular-nums text-slate-950">
+              <span className="min-w-[2rem] text-center text-sm font-semibold tabular-nums text-primary">
                 {windowDays}
               </span>
               <button
                 type="button"
-                className="focus-ring flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary bg-primary text-secondary hover:bg-secondary"
                 onClick={() => onWindowDaysChange(windowDays + 1)}
                 aria-label="Increase window"
               >
@@ -67,12 +67,12 @@ export function BeforeAfterCampaign({
           </label>
         </div>
       </div>
-      <div className="mb-3 flex gap-6 text-sm text-slate-600">
+      <div className="mb-3 flex gap-6 text-sm text-tertiary">
         <span>
-          Before: <strong className="tabular-nums text-slate-950">{formatCompact(before)}</strong> pts
+          Before: <strong className="tabular-nums text-primary">{formatCompact(before)}</strong> pts
         </span>
         <span>
-          After: <strong className="tabular-nums text-slate-950">{formatCompact(after)}</strong> pts
+          After: <strong className="tabular-nums text-primary">{formatCompact(after)}</strong> pts
         </span>
       </div>
       <div className="h-[240px]">

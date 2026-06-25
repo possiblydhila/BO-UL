@@ -16,8 +16,8 @@ export function CampaignPerformancePanel({
   return (
     <section className="surface p-5">
       <div className="mb-5">
-        <h3 className="text-base font-semibold text-slate-950">Campaign performance</h3>
-        <p className="mt-1 text-sm text-slate-500">Active campaigns, participation rates, and top performers.</p>
+        <h3 className="text-base font-semibold text-primary">Campaign performance</h3>
+        <p className="mt-1 text-sm text-quaternary">Active campaigns, participation rates, and top performers.</p>
       </div>
       <div className="mb-5 grid gap-4 sm:grid-cols-3">
         {kpis.map((kpi) => (
@@ -25,11 +25,11 @@ export function CampaignPerformancePanel({
         ))}
       </div>
       <div>
-        <h4 className="mb-3 text-sm font-semibold text-slate-700">Campaign participation</h4>
+        <h4 className="mb-3 text-sm font-semibold text-secondary">Campaign participation</h4>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[400px] text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500">
+              <tr className="border-b border-secondary text-xs font-semibold text-quaternary">
                 <th className="pb-2 pr-4">Campaign</th>
                 <th className="pb-2 pr-4">Status</th>
                 <th className="pb-2 pr-4 text-right">Participants</th>
@@ -44,22 +44,22 @@ export function CampaignPerformancePanel({
                     : "0.0";
                 return (
                   <tr key={campaign.id} className="border-b border-slate-100">
-                    <td className="py-2.5 pr-4 font-medium text-slate-900">{campaign.name}</td>
+                    <td className="py-2.5 pr-4 font-medium text-primary">{campaign.name}</td>
                     <td className="py-2.5 pr-4">
                       <span
                         className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                           campaign.status === "active"
-                            ? "bg-success-50 text-success-700"
-                            : "bg-slate-100 text-slate-600"
+                            ? "bg-success-50 text-success-primary"
+                            : "bg-tertiary text-tertiary"
                         }`}
                       >
                         {campaign.status}
                       </span>
                     </td>
-                    <td className="py-2.5 pr-4 text-right tabular-nums text-slate-700">
+                    <td className="py-2.5 pr-4 text-right tabular-nums text-secondary">
                       {formatNumber(campaign.participantCifIds.length)}
                     </td>
-                    <td className="py-2.5 text-right tabular-nums text-slate-700">{rate}%</td>
+                    <td className="py-2.5 text-right tabular-nums text-secondary">{rate}%</td>
                   </tr>
                 );
               })}

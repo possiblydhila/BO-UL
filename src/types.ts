@@ -1,4 +1,6 @@
-import type { LucideIcon } from "lucide-react";
+import type { FC, SVGProps } from "react";
+
+export type IconComponent = FC<SVGProps<SVGSVGElement>>;
 
 export type RouteKey =
   | "dashboard"
@@ -44,7 +46,7 @@ export type NavItem = {
   key: RouteKey;
   label: string;
   description: string;
-  icon: LucideIcon;
+  icon: IconComponent;
 };
 
 export type DashboardFilters = {

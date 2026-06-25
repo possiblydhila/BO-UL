@@ -1,13 +1,12 @@
 import {
-  BarChart3,
-  Coins,
-  FileBarChart,
-  Gift,
-  LayoutDashboard,
-  Repeat2,
-  ShieldCheck,
-  Users,
-} from "lucide-react";
+  BarChartSquare02,
+  CoinsStacked01,
+  File02,
+  Gift01,
+  RefreshCw01,
+  ShieldTick,
+  Users01,
+} from "@untitledui/icons";
 import type { ExpiredDurationUnit, PointConfig } from "../domain/pointConfig";
 import type { Channel, NavItem, SourceSystem, TransactionType } from "../types";
 import {
@@ -23,43 +22,43 @@ export const navItems: NavItem[] = [
     key: "dashboard",
     label: "Analytics Dashboard",
     description: "Monitoring KPI loyalty, campaign, liability, dan channel.",
-    icon: LayoutDashboard,
+    icon: BarChartSquare02,
   },
   {
     key: "point-config",
     label: "Point Configuration",
     description: "Identitas poin, masa berlaku, dan kebijakan reset.",
-    icon: Coins,
+    icon: CoinsStacked01,
   },
   {
     key: "users",
     label: "User",
     description: "Daftar dan profil pengguna loyalty.",
-    icon: Users,
+    icon: Users01,
   },
   {
     key: "earning-rules",
     label: "Earning Rule",
     description: "Konfigurasi aturan perolehan poin.",
-    icon: ShieldCheck,
+    icon: ShieldTick,
   },
   {
     key: "redemption-rules",
     label: "Redemption Rule",
     description: "Konfigurasi aturan penukaran poin.",
-    icon: Repeat2,
+    icon: RefreshCw01,
   },
   {
     key: "rewards",
     label: "Rewards Points Management",
     description: "Katalog reward dan stok.",
-    icon: Gift,
+    icon: Gift01,
   },
   {
     key: "reporting",
     label: "Reporting",
     description: "Laporan operasional dan rekonsiliasi.",
-    icon: FileBarChart,
+    icon: File02,
   },
 ];
 
@@ -504,4 +503,4 @@ export const sourceSystemLabel = {
   cardlink: "Cardlink",
 };
 
-export const barChartIcon = BarChart3;
+export const barChartIcon = BarChartSquare02;

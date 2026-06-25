@@ -33,8 +33,8 @@ export function ChannelPerformancePanel({
   return (
     <section className="surface p-5">
       <div className="mb-5">
-        <h3 className="text-base font-semibold text-slate-950">Channel performance</h3>
-        <p className="mt-1 text-sm text-slate-500">Top channels and redemption breakdown by channel and reward.</p>
+        <h3 className="text-base font-semibold text-primary">Channel performance</h3>
+        <p className="mt-1 text-sm text-quaternary">Top channels and redemption breakdown by channel and reward.</p>
       </div>
       <div className="mb-5 grid gap-4 sm:grid-cols-2">
         {kpis.slice(0, 2).map((kpi) => (
@@ -43,7 +43,7 @@ export function ChannelPerformancePanel({
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
         <div>
-          <h4 className="mb-3 text-sm font-semibold text-slate-700">Redemption per channel</h4>
+          <h4 className="mb-3 text-sm font-semibold text-secondary">Redemption per channel</h4>
           <div className="h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={channelChartData} margin={{ left: 8, right: 12, top: 8, bottom: 8 }}>
@@ -57,7 +57,7 @@ export function ChannelPerformancePanel({
           </div>
         </div>
         <div>
-          <h4 className="mb-3 text-sm font-semibold text-slate-700">Redemption per reward type</h4>
+          <h4 className="mb-3 text-sm font-semibold text-secondary">Redemption per reward type</h4>
           <div className="grid h-[220px] gap-4 md:grid-cols-[1fr_140px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -79,14 +79,14 @@ export function ChannelPerformancePanel({
             <div className="flex flex-col justify-center gap-2 overflow-y-auto">
               {redemptionByReward.map((item, index) => (
                 <div key={item.name} className="flex items-center justify-between gap-2 text-xs">
-                  <span className="flex min-w-0 items-center gap-1.5 text-slate-600">
+                  <span className="flex min-w-0 items-center gap-1.5 text-tertiary">
                     <span
                       className="h-2 w-2 flex-none rounded-full"
                       style={{ background: COLORS[index % COLORS.length] }}
                     />
                     <span className="truncate">{item.name}</span>
                   </span>
-                  <span className="font-semibold tabular-nums text-slate-950">{formatCompact(item.value)}</span>
+                  <span className="font-semibold tabular-nums text-primary">{formatCompact(item.value)}</span>
                 </div>
               ))}
             </div>

@@ -33,11 +33,11 @@ function DashboardSectionHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 md:flex-row md:items-start md:justify-between">
+    <div className="flex flex-col gap-4 border-b border-secondary pb-5 md:flex-row md:items-start md:justify-between">
       <div>
-        <p className="text-sm font-semibold text-brand-700">Portal Back Office</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-normal text-slate-950 md:text-3xl">{title}</h1>
-        {description && <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p>}
+        <p className="text-sm font-semibold text-brand-secondary">Portal Back Office</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-normal text-primary md:text-3xl">{title}</h1>
+        {description && <p className="mt-2 max-w-3xl text-sm leading-6 text-tertiary">{description}</p>}
       </div>
       {action && <div className="flex flex-wrap items-center gap-2">{action}</div>}
     </div>

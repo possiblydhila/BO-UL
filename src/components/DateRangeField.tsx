@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight } from "@untitledui/icons";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
@@ -75,10 +75,10 @@ function MonthGrid({
 
   return (
     <div>
-      <p className="mb-3 text-center text-sm font-semibold text-slate-950">
+      <p className="mb-3 text-center text-sm font-semibold text-primary">
         {month.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
       </p>
-      <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-500">
+      <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-quaternary">
         {WEEKDAYS.map((day) => (
           <div key={day} className="py-1">
             {day}
@@ -96,14 +96,14 @@ function MonthGrid({
               type="button"
               disabled={!inMonth}
               onClick={() => onSelect(date)}
-              className={`focus-ring h-9 rounded-md text-sm transition ${
+              className={`h-9 rounded-md text-sm transition ${
                 !inMonth
                   ? "cursor-default text-slate-300"
                   : selectedStart || selectedEnd
                     ? "bg-brand-600 font-semibold text-white"
                     : inRange
-                      ? "bg-brand-50 font-medium text-brand-700"
-                      : "text-slate-700 hover:bg-slate-100"
+                      ? "bg-brand-primary font-medium text-brand-secondary"
+                      : "text-secondary hover:bg-tertiary"
               }`}
             >
               {date.getDate()}
@@ -184,32 +184,32 @@ export function DateRangeField({
 
   return (
     <div ref={containerRef} className="relative">
-      <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
+      <span className="mb-1.5 block text-sm font-medium text-secondary">{label}</span>
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="focus-ring flex h-10 w-full items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-left text-sm text-slate-900"
+        className="flex h-10 w-full items-center gap-2 rounded-lg border border-primary bg-primary px-3 text-left text-sm text-primary"
       >
         <Calendar className="h-4 w-4 shrink-0 text-slate-400" />
-        <span className={periodStart && periodEnd ? "text-slate-900" : "text-slate-500"}>{displayValue}</span>
+        <span className={periodStart && periodEnd ? "text-primary" : "text-quaternary"}>{displayValue}</span>
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 z-50 mt-2 rounded-xl border border-slate-200 bg-white p-4 shadow-lg sm:right-auto sm:w-[520px]">
+        <div className="absolute left-0 right-0 z-50 mt-2 rounded-xl border border-secondary bg-primary p-4 shadow-lg sm:right-auto sm:w-[520px]">
           <div className="mb-4 flex items-center justify-between">
             <button
               type="button"
               aria-label="Previous month"
-              className="focus-ring rounded-lg p-2 text-slate-600 hover:bg-slate-100"
+              className="rounded-lg p-2 text-tertiary hover:bg-tertiary"
               onClick={() => setViewMonth((current) => addMonths(current, -1))}
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <p className="text-sm font-medium text-slate-600">Select start and end dates</p>
+            <p className="text-sm font-medium text-tertiary">Select start and end dates</p>
             <button
               type="button"
               aria-label="Next month"
-              className="focus-ring rounded-lg p-2 text-slate-600 hover:bg-slate-100"
+              className="rounded-lg p-2 text-tertiary hover:bg-tertiary"
               onClick={() => setViewMonth((current) => addMonths(current, 1))}
             >
               <ChevronRight className="h-4 w-4" />
@@ -226,8 +226,8 @@ export function DateRangeField({
             />
           </div>
 
-          <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
-            <p className="text-xs text-slate-500">
+          <div className="mt-4 flex items-center justify-between gap-3 border-t border-secondary pt-4">
+            <p className="text-xs text-quaternary">
               {draftStart && draftEnd
                 ? `${formatDisplay(toIsoDate(draftStart))} – ${formatDisplay(toIsoDate(draftEnd))}`
                 : draftStart
@@ -238,7 +238,7 @@ export function DateRangeField({
               <button
                 type="button"
                 onClick={clearRange}
-                className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className="rounded-lg border border-primary px-3 py-2 text-sm font-semibold text-secondary hover:bg-secondary"
               >
                 Clear
               </button>
@@ -246,7 +246,7 @@ export function DateRangeField({
                 type="button"
                 disabled={!draftStart || !draftEnd}
                 onClick={applyRange}
-                className="focus-ring rounded-lg border border-brand-600 bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-brand-600 bg-brand-600 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Apply
               </button>

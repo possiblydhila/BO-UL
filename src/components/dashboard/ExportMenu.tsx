@@ -1,7 +1,8 @@
 import { useState } from "react";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
-import { ChevronDown, FileImage, FileText } from "lucide-react";
+import { ChevronDown, File02, Image01 } from "@untitledui/icons";
+import { Button } from "@/components/ui/app-primitives";
 
 function ExportButton({
   children,
@@ -17,7 +18,7 @@ function ExportButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="focus-ring flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-secondary hover:bg-secondary_hover disabled:opacity-50"
     >
       {children}
     </button>
@@ -64,17 +65,15 @@ export function ExportMenu({ containerRef }: { containerRef: React.RefObject<HTM
 
   return (
     <div className="relative">
-      <button
-        type="button"
+      <Button
         onClick={() => setOpen((v) => !v)}
-        disabled={exporting}
-        className="focus-ring inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+        isDisabled={exporting}
         aria-haspopup="menu"
         aria-expanded={open}
+        iconTrailing={ChevronDown}
       >
         Export
-        <ChevronDown className="h-4 w-4 text-slate-400" />
-      </button>
+      </Button>
       {open && (
         <>
           <button
@@ -83,13 +82,13 @@ export function ExportMenu({ containerRef }: { containerRef: React.RefObject<HTM
             aria-label="Close export menu"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-subtle">
+          <div className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-lg border border-secondary bg-primary py-1 shadow-xs">
             <ExportButton onClick={exportPng} disabled={exporting}>
-              <FileImage className="h-4 w-4" />
+              <Image01 className="size-4" />
               Export PNG
             </ExportButton>
             <ExportButton onClick={exportPdf} disabled={exporting}>
-              <FileText className="h-4 w-4" />
+              <File02 className="size-4" />
               Export PDF
             </ExportButton>
           </div>
