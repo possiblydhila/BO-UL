@@ -1,0 +1,42 @@
+---
+description: BNI Loyalty Back Office — global project context, stack, and navigation
+alwaysApply: true
+---
+
+# BNI Loyalty — Back Office Portal
+
+Front-end prototype for a banking loyalty program back-office portal. Operations, product, finance, and approval teams manage loyalty points, monitor KPIs, and run reports.
+
+**Branding:** BNI Loyalty — Back Office Portal
+
+## Stack
+
+React 19 · TypeScript 5.8 (strict) · Vite 7 · Tailwind 3.4 · Recharts 2.15 · Lucide React
+
+## Prototype constraints
+
+- Mock data only — no backend, API, or persistence
+- No authentication — role toggle is UI-only
+- No URL routing — navigation via `useState<RouteKey>` in `src/App.tsx`
+- Pages live in `src/App.tsx`; types in `src/types.ts`; data in `src/data/mockData.ts`
+
+## Navigation map
+
+| Route key | Label | Module PRD rule |
+|-----------|-------|-----------------|
+| `dashboard` | Analytics Dashboard | `prd-analytics-dashboard` |
+| `earning-rules` | Earning Rule | `prd-earning-rules` |
+| `redemption-rules` | Redemption Rule | `prd-redemption-rules` |
+| `users` | User | `prd-users` |
+| `rewards` | Rewards Points Management | `prd-rewards` |
+| `reporting` | Reporting | `prd-reporting` |
+
+Shared rule drawer (earning + redemption): `prd-rule-drawer`
+
+## References
+
+- Full feature tracking: `FEATURES.md` (source of truth — sync module PRD rules per [Maintenance → Cursor PRD rules](FEATURES.md#cursor-prd-rules))
+- Architecture, domain model, phases, gaps: `ARCHITECTURE.md`
+- Shell routing: `src/types.ts` (`RouteKey`), `src/data/mockData.ts` (`navItems`), `src/App.tsx`
+
+When implementing a module, follow that module's PRD rule and `ARCHITECTURE.md` for backend/domain contracts.

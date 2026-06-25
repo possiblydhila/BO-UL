@@ -7,14 +7,12 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import type {
-  CampaignSummary,
-  Channel,
-  DashboardData,
-  NavItem,
-  SourceSystem,
-  TransactionType,
-} from "../types";
+import type { Channel, NavItem, SourceSystem, TransactionType } from "../types";
+import {
+  generateCifPool,
+  generateMockCampaigns,
+  generateMockTransactions,
+} from "./dashboardMockGenerator";
 import type { Rule, RuleMode } from "../domain/rule";
 import { statusLabels } from "../domain/ruleStatus";
 
@@ -162,70 +160,17 @@ export const partnerCapTimeframeOptions = [
 
 export { statusLabels };
 
-export const dashboardData: DashboardData = {
-  customerEngagement: [
-    { label: "CIF Earning MTD", value: "42.8K", detail: "Nasabah unik memperoleh poin", delta: "+8.2% MoM", trend: "up" },
-    { label: "CIF Redeem MTD", value: "11.4K", detail: "Nasabah unik redeem poin", delta: "+3.1% MoM", trend: "up" },
-    { label: "Redemption Rate by CIF", value: "26.6%", detail: "CIF redeem / CIF earning", delta: "-1.4% MoM", trend: "down" },
-    { label: "Redemption Rate by Poin", value: "41.9%", detail: "Poin redeemed / poin issued", delta: "+2.7% MoM", trend: "up" },
-  ],
-  pointPerformance: [
-    { label: "Total Poin Issued YTD", value: "1.28B", detail: "Earning point keseluruhan", delta: "+13.4% YoY", trend: "up" },
-    { label: "Total Poin Redeemed YTD", value: "536M", detail: "Redeem point keseluruhan", delta: "+10.1% YoY", trend: "up" },
-    { label: "Poin Balance Liability", value: "744M", detail: "Poin belum digunakan", delta: "Read-only", trend: "flat" },
-    { label: "Expired Points YTD", value: "38.6M", detail: "Poin melewati masa berlaku", delta: "+4.8% YoY", trend: "up" },
-    { label: "Estimated Point Cost", value: "Rp 2.7B", detail: "Placeholder sampai cost rule final", delta: "Needs rule", trend: "flat" },
-  ],
-  transactionImpact: [
-    { label: "Top Aktivitas", value: "Payment", detail: "Kontribusi earning tertinggi", delta: "34.2% share", trend: "up" },
-    { label: "Top Source", value: "Saving", detail: "Source earning tertinggi", delta: "62.5% share", trend: "up" },
-  ],
-  channelPerformance: [
-    { label: "Top Redeem Channel", value: "Wondr", detail: "Poin redeem tertinggi", delta: "48.1% share", trend: "up" },
-    { label: "Top Earn Channel", value: "API", detail: "Poin earn tertinggi", delta: "35.6% share", trend: "up" },
-    { label: "Top Reward", value: "Voucher", detail: "Reward paling banyak diredeem", delta: "31.9% share", trend: "up" },
-  ],
-  campaignCards: [
-    { label: "Campaign Aktif", value: "14", detail: "Campaign berjalan", delta: "+2 vs last month", trend: "up" },
-    { label: "Participation Rate", value: "37.4%", detail: "Peserta / target user", delta: "+5.3% MoM", trend: "up" },
-    { label: "Top Campaign", value: "HUT BNI", detail: "186.4K participants", delta: "Highest", trend: "flat" },
-  ],
-  trends: [
-    { period: "Jan", cifEarn: 31200, cifRedeem: 7800, pointEarn: 158, pointRedeem: 61 },
-    { period: "Feb", cifEarn: 32800, cifRedeem: 8200, pointEarn: 171, pointRedeem: 70 },
-    { period: "Mar", cifEarn: 35400, cifRedeem: 9100, pointEarn: 184, pointRedeem: 76 },
-    { period: "Apr", cifEarn: 38800, cifRedeem: 10100, pointEarn: 203, pointRedeem: 87 },
-    { period: "May", cifEarn: 40700, cifRedeem: 10800, pointEarn: 219, pointRedeem: 91 },
-    { period: "Jun", cifEarn: 42800, cifRedeem: 11400, pointEarn: 232, pointRedeem: 97 },
-  ],
-  earningByActivity: [
-    { name: "Payment", value: 342 },
-    { name: "Purchase", value: 278 },
-    { name: "Transfer", value: 206 },
-    { name: "VA", value: 96 },
-  ],
-  earningBySource: [
-    { name: "Saving", value: 625 },
-    { name: "Cardlink", value: 375 },
-  ],
-  redemptionByChannel: [
-    { name: "Wondr", value: 481 },
-    { name: "ATM", value: 196 },
-    { name: "Mbank", value: 168 },
-    { name: "API", value: 155 },
-  ],
-  redemptionByReward: [
-    { name: "Voucher", value: 319 },
-    { name: "E-wallet", value: 208 },
-    { name: "Barang", value: 181 },
-    { name: "Donasi", value: 94 },
-    { name: "Annual fee", value: 63 },
-  ],
-  campaigns: [
-    { id: "hut-bni", name: "HUT BNI", active: true, targetUsers: 498000, participants: 186400, beforeRedeem: 128, afterRedeem: 192 },
-    { id: "survey-pelanggan", name: "Survey Pelanggan", active: true, targetUsers: 125000, participants: 41200, beforeRedeem: 62, afterRedeem: 88 },
-    { id: "aktivasi-wondr", name: "Aktivasi Wondr", active: true, targetUsers: 320000, participants: 102900, beforeRedeem: 104, afterRedeem: 154 },
-  ] satisfies CampaignSummary[],
+const cifPool = generateCifPool(42, 380);
+export const mockTransactions = generateMockTransactions(42);
+export const mockCampaigns = generateMockCampaigns(cifPool, 42);
+
+export const defaultDashboardFilters = {
+  startDate: "2026-06-01",
+  endDate: "2026-06-30",
+  channel: "all" as const,
+  sourceSystem: "all" as const,
+  transactionType: "all" as const,
+  campaignId: "hut-bni",
 };
 
 export const rules: Rule[] = [

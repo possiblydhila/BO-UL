@@ -41,7 +41,7 @@ High-level status vs [ARCHITECTURE.md](ARCHITECTURE.md) build phases. **UI** = p
 | Earning Rule — Tab General (`PointConfig`) | 1 | — | — | — | Gap #7: shared vs duplicated record TBD |
 | Earning Rule — Rule tab | 1 | Done | Mock | — | Date range picker for period; submit/approve/toggle non-functional |
 | Redemption Rule | 1 | Done | Mock | — | Shared `RuleModule`; Gap #4 on `ruleTabId`/`sourceTypeId` |
-| Analytics Dashboard | 3 | Done | Mock | — | KPI formulas open — [§9 gaps #8–15](ARCHITECTURE.md#9-gaps--open-questions-to-resolve-before-build) |
+| Analytics Dashboard | 3 | Done | Mock (computed) | — | TBD KPIs: redemption-by-point, Cost |
 | Reporting | 4 | Tabs only | — | — | Six tabs shell; no report tables |
 | User | — | Shell | — | — | Out of scope in ARCHITECTURE.md |
 | Rewards Points Management | — | Shell | — | — | Out of scope; needed before Phase 2 eval engine |
@@ -89,80 +89,81 @@ flowchart LR
 
 ### Purpose
 
-Monitor loyalty KPIs across customer engagement, point performance, transaction impact, channel performance, and campaigns. Surfaces open business-definition gaps via an audit panel. Production KPI definitions and data sources are specified in ARCHITECTURE.md §6.1; prototype uses static `dashboardData` only.
+Monitor loyalty KPIs across customer engagement, point performance, transaction impact, channel performance, and campaigns. TBD business definitions surface as placeholder KPI cards (redemption rate by point, Cost). Production KPI definitions and data sources are specified in ARCHITECTURE.md §6.1; prototype uses seeded `PointTransaction[]` aggregated client-side via `src/data/aggregations.ts`.
 
 ### Key UI Elements
+
+**Header:** Loyalty Analytics title, role switcher (`employee` | `approver` | `admin`), export menu (PDF/PNG).
 
 **Filters** (`DashboardFilters`):
 
 | Filter | Options | Notes |
 |--------|---------|-------|
-| Start / End date | Date inputs | Default from `defaultFilters` in mockData |
+| Start / End date | Date inputs | Default from `defaultDashboardFilters` in mockData |
 | Channel | All, Wondr, ATM, API, BNI Direct, Mbank, SMS | |
 | Source system | All, Saving, Cardlink | |
-| Transaction type | Purchase, Payment, transfers, VA | **Disabled** unless source = Saving |
+| Transaction type | Purchase, Payment, transfers, VA | **Hidden** unless source = Saving |
 | Campaign | Campaign selector | Used in before/after chart |
 
-**KPI card groups** (from `dashboardData`):
+**KPI card groups** (computed from `aggregations.ts`):
 
-1. **Customer Engagement** — CIF Earning MTD, CIF Redeem MTD, Redemption Rate by CIF, Redemption Rate by Poin
-2. **Poin Performance** — Total Poin Issued/Redeemed YTD, Poin Balance Liability, Expired Points YTD, Estimated Point Cost (placeholder)
-3. **Transaction Impact** — Top Aktivitas, Top Source
-4. **Channel Performance** — Top Redeem Channel, Top Earn Channel, Top Reward
-5. **Campaign** — Campaign Aktif, Participation Rate, Top Campaign
+1. **Customer Engagement** — CIF Earning, CIF Redeem, Redemption rate (by CIF), Redemption rate (by point) **TBD**
+2. **Point Performance** — Points issued, Points redeemed, Point balance/liability, Expired points
+3. **Cost** — Single **TBD** placeholder card
+4. **Transaction Impact** — Earning per transaction type, Earning per source
+5. **Channel Performance** — Redemption per channel, Top channel by earn/redeem, Top reward type
+6. **Campaign** — Active campaign count, Participation rate, Top campaign
 
-Each KPI card shows value, detail, delta, and trend (`up` | `down` | `flat`). "View details" links are present but non-functional.
+Each KPI card shows value, detail, and inline sparkline (`tabular-nums`). TBD cards use dashed border and "Definition pending" text.
 
-**Charts:**
+**Charts & panels:**
 
-| Chart | Type | Data source |
-|-------|------|-------------|
-| Daily / Weekly / Monthly trend | Line | `trends` — CIF earn/redeem, point earn/redeem (millions) |
-| Earning poin per aktivitas | Bar | `earningByActivity` |
-| Earning poin per source | Donut | `earningBySource` (Saving vs Cardlink) |
-| Redemption per channel | Area | `redemptionByChannel` |
-| Redemption per reward | Donut | `redemptionByReward` |
-| Before vs after campaign | Bar | Derived from selected `CampaignSummary` |
+| Component | Type | Data source |
+|-----------|------|-------------|
+| Daily / Weekly / Monthly trend | Line + granularity toggle | `computeTrendSeries` |
+| MoM / YoY growth | Delta cards | `computeGrowth` |
+| Channel performance | Bar + donut + KPI cards | `computeChannelPerformance` |
+| Campaign performance | Table + KPI cards | `computeCampaignKpis` |
+| Before vs after campaign | Bar + window stepper (default 14d) | `computeBeforeAfterCampaign` |
 
 **Other UI:**
 
-- Export PDF / Export PNG buttons (non-functional)
-- Dashboard audit panel — 8 business sign-off notes (see [Open Items](#open-items--business-sign-off))
-- "Last updated: just now" — no real-time polling
+- Export PDF / Export PNG — client-side via `html2canvas` + `jsPDF`
+- Reconciliation panel — mock "Run Reconciliation Now" (Approver/Admin only), 5-entry run log
+- Role switcher — dashboard-only; independent of earning/redemption rule role toggle
 
 ### User Flow
 
 1. App loads with `dashboard` as default route
-2. User reviews KPI cards and charts
+2. User reviews KPI cards and charts (all filter-driven)
 3. User adjusts filters (dates, channel, source, transaction type)
-4. If source ≠ Saving, transaction type resets to "all" and the field disables
-5. Trend line chart scales by `filterFactor`; other KPIs and charts remain static
-6. User selects a campaign in the before/after comparison chart
-7. User scrolls to audit panel to review open business questions
-8. Optional: Export PDF/PNG or "View details" (no action)
+4. If source ≠ Saving, transaction type resets to "all" and the field hides
+5. User toggles trend granularity (daily/weekly/monthly)
+6. User selects campaign and adjusts before/after window days
+7. Approver/Admin runs mock reconciliation and reviews run log
+8. Optional: Export PDF/PNG of current view
 
 ### State & Data
 
 | State | Type | Location |
 |-------|------|----------|
-| `filters` | `DashboardFilters` | `Dashboard` component |
+| `filters` | `DashboardFilters` | `DashboardPage` |
+| `role` | `DashboardRole` | `DashboardPage` |
+| `reconRuns` | `ReconciliationRun[]` | `DashboardPage` |
+| `granularity` | `TrendGranularity` | `DashboardPage` |
+| `windowDays` | `number` | `DashboardPage` (before/after campaign) |
 
-**Filter simulation:** Only the trend chart responds to filters via a multiplier:
-
-```
-filterFactor = channelFactor × sourceFactor × transactionFactor
-```
-
-KPI cards and distribution charts always show full mock data.
+**Data:** `mockTransactions` + `mockCampaigns` from `src/data/dashboardMockGenerator.ts`. All KPIs/charts call pure functions in `src/data/aggregations.ts` with `(transactions, campaigns, filters)`.
 
 ### Status
 
 | Capability | Status |
 |------------|--------|
-| KPI cards | Done (mock) |
-| Charts | Done (mock) |
-| Filters | Partial — trend only |
-| Export | Non-functional |
+| KPI cards + sparklines | Done (computed mock) |
+| Charts + panels | Done (computed mock) |
+| Filters | Done — global |
+| Export PDF/PNG | Done (client-side) |
+| Reconciliation mock | Done (role-gated) |
 | Drill-down | Non-functional |
 | Real-time SLA | Undefined |
 
@@ -608,6 +609,29 @@ Update this file when:
 - Non-functional actions become wired up (export, drill-down, CRUD persistence)
 - Tab General (`PointConfig`) is implemented or architecture gaps in §9 are resolved
 - Any shipped UI or flow change — append a row to [Changes Tracking](#changes-tracking) with timestamp and commit hash
+- **Cursor PRD rules** — when any module section above changes, update the matching `.cursor/rules/prd-*.mdc` file (see [Cursor PRD rules](#cursor-prd-rules))
+
+### Cursor PRD rules
+
+Per-module PRDs for the Cursor agent live in `.cursor/rules/`. **`FEATURES.md` is the source of truth** — keep rules in sync when module scope, flows, status, or data shapes change.
+
+| Route key | Module | Cursor rule file | `FEATURES.md` section |
+|-----------|--------|------------------|----------------------|
+| — | Global context (stack, nav, constraints) | `.cursor/rules/00-project-context.mdc` | [Overview](#overview), [Navigation Map](#navigation-map) |
+| `dashboard` | Analytics Dashboard | `.cursor/rules/prd-analytics-dashboard.mdc` | [§1 Analytics Dashboard](#1-analytics-dashboard) |
+| `earning-rules` | Earning Rule | `.cursor/rules/prd-earning-rules.mdc` | [§2 Earning Rule Management](#2-earning-rule-management) |
+| `redemption-rules` | Redemption Rule | `.cursor/rules/prd-redemption-rules.mdc` | [§3 Redemption Rule Management](#3-redemption-rule-management) |
+| — | Rule drawer (shared) | `.cursor/rules/prd-rule-drawer.mdc` | [§4 Rule Drawer (Shared)](#4-rule-drawer-shared) |
+| `users` | User | `.cursor/rules/prd-users.mdc` | [§5 User Management (Placeholder)](#5-user-management-placeholder) |
+| `rewards` | Rewards Points Management | `.cursor/rules/prd-rewards.mdc` | [§6 Rewards Points Management (Placeholder)](#6-rewards-points-management-placeholder) |
+| `reporting` | Reporting | `.cursor/rules/prd-reporting.mdc` | [§7 Reporting (Placeholder)](#7-reporting-placeholder) |
+
+**Sync checklist** (after editing a module in this file):
+
+1. Update the matching `prd-*.mdc` — purpose, UI, flows, status table, and open items for that module only.
+2. If navigation or global constraints change, update `00-project-context.mdc`.
+3. If shared drawer fields or lifecycle change, update `prd-rule-drawer.mdc` and cross-check earning/redemption rules.
+4. Keep rules concise (agent context); link here and to `ARCHITECTURE.md` for full detail.
 
 **Key files:**
 
@@ -615,6 +639,7 @@ Update this file when:
 |------|------|
 | `FEATURES.md` | Prototype feature tracking, UI flows, implementation status, change log |
 | `ARCHITECTURE.md` | System architecture, domain model, phases, gaps, API contracts |
+| `.cursor/rules/*.mdc` | Per-module PRD rules for Cursor agent (synced from this file) |
 | `src/domain/rule.ts` | Unified `Rule`, `RuleConfig`, `RedemptionHeader` types |
 | `src/domain/ruleStatus.ts` | Status labels, `canEdit`, transition guards |
 | `src/domain/ruleConfig.ts` | Config defaults and accessors per rule type |

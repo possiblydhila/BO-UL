@@ -1,0 +1,26 @@
+---
+description: PRD — User module (route users) — placeholder
+alwaysApply: false
+---
+
+# User Management
+
+**Route:** `users` · **Arch phase:** Out of scope in ARCHITECTURE.md
+
+## Purpose
+
+Future module for user list and loyalty profiles.
+
+## Current state
+
+Navigation slot only. Placeholder: "Ready for next detail pass".
+
+## Planned scope
+
+- User list with search/filter
+- Loyalty profile detail view
+- Role/permission assignment (TBD)
+
+## Implementation notes
+
+When building this module, replace `PlaceholderPage` in `src/App.tsx` for `route === "users"`. Add types to `src/types.ts` and mock data as needed. Keep shell layout (sidebar, breadcrumb `Portal / User`) consistent with other modules.

@@ -1,42 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Legend,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import {
   ChevronDown,
   Download,
   Edit3,
-  FileImage,
-  FileText,
-  Filter,
   Menu,
-  MoreHorizontal,
-  PanelRightOpen,
   Plus,
   Search,
   Upload,
   X,
 } from "lucide-react";
 import {
-  auditNotes,
   cardTypeOptions,
-  channelOptions,
   cobrandCardTypeOptions,
-  dashboardData,
   getRulesByMode,
   maxCapacityTimeframeOptions,
   maxCapacityTypeOptions,
@@ -50,8 +25,6 @@ import {
   ruleChannelOptions,
   ruleSourceSystemOptions,
   ruleTransactionTypeOptions,
-  savingTransactionTypeOptions,
-  sourceSystemOptions,
   statusLabels,
   targetUserOptions,
   thirdPartyProgramOptions,
@@ -68,19 +41,10 @@ import {
 } from "./domain/ruleConfig";
 import { canEdit } from "./domain/ruleStatus";
 import { filterRules } from "./services/ruleQueries";
-import type {
-  DashboardFilters,
-  DistributionPoint,
-  KpiCard,
-  Role,
-  RouteKey,
-  RuleStatus,
-  RuleType,
-} from "./types";
+import type { Role, RouteKey, RuleStatus, RuleType } from "./types";
 import { calculatePoints, formatCompact, formatNumber } from "./utils/points";
 import { DateRangeField } from "./components/DateRangeField";
-
-const colors = ["#1570ef", "#12b76a", "#f79009", "#7a5af8", "#f04438", "#06aed4"];
+import { DashboardPage } from "./components/dashboard/DashboardPage";
 
 const statusClass: Record<RuleStatus, string> = {
   active: "bg-success-50 text-success-700 ring-success-700/10",
@@ -97,15 +61,6 @@ const typeLabel: Record<RuleType, string> = {
   tactical: "Tactical",
   personal_earning: "Personal Earning",
   third_party_points: "Third Party Points",
-};
-
-const defaultFilters: DashboardFilters = {
-  startDate: "2026-06-01",
-  endDate: "2026-06-30",
-  channel: "all",
-  sourceSystem: "all",
-  transactionType: "all",
-  campaignId: "hut-bni",
 };
 
 function Button({
@@ -219,281 +174,6 @@ function SectionHeader({
   );
 }
 
-function StatCard({ item }: { item: KpiCard }) {
-  const trendColor =
-    item.trend === "up" ? "text-success-700" : item.trend === "down" ? "text-danger-700" : "text-slate-500";
-  return (
-    <article className="surface flex min-h-[142px] flex-col justify-between p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-slate-600">{item.label}</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">{item.value}</p>
-        </div>
-        <Button variant="ghost" className="h-9 min-h-9 w-9 px-0" aria-label={`View details ${item.label}`}>
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </div>
-      <div>
-        <p className="text-sm text-slate-500">{item.detail}</p>
-        <p className={`mt-1 text-sm font-semibold ${trendColor}`}>{item.delta}</p>
-      </div>
-    </article>
-  );
-}
-
-function CardGrid({ title, items }: { title: string; items: KpiCard[] }) {
-  return (
-    <section>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-base font-semibold text-slate-950">{title}</h2>
-        <button className="text-sm font-semibold text-brand-700">View details</button>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {items.map((item) => (
-          <StatCard key={item.label} item={item} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function ChartPanel({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="surface p-5">
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div>
-          <h3 className="text-base font-semibold text-slate-950">{title}</h3>
-          <p className="mt-1 text-sm text-slate-500">{description}</p>
-        </div>
-        <Button variant="ghost" className="h-9 min-h-9 w-9 px-0" aria-label={`View details ${title}`}>
-          <PanelRightOpen className="h-4 w-4" />
-        </Button>
-      </div>
-      <div className="h-[280px] min-w-0">{children}</div>
-    </section>
-  );
-}
-
-function AuditNotes() {
-  return (
-    <section className="surface border-warning-200 bg-warning-50/60 p-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <p className="text-sm font-semibold text-warning-700">Dashboard audit</p>
-          <h2 className="mt-1 text-lg font-semibold text-slate-950">Missing pieces and questionable details</h2>
-          <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-700">
-            These are intentionally visible in the prototype so product, data, finance, and operations teams can close the
-            open definitions before backend integration.
-          </p>
-        </div>
-        <span className="inline-flex w-fit rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-slate-200">
-          Needs business sign-off
-        </span>
-      </div>
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        {auditNotes.map((note) => (
-          <div key={note} className="rounded-lg border border-warning-200 bg-white p-3 text-sm leading-6 text-slate-700">
-            {note}
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function Dashboard() {
-  const [filters, setFilters] = useState<DashboardFilters>(defaultFilters);
-
-  useEffect(() => {
-    if (filters.sourceSystem !== "saving" && filters.transactionType !== "all") {
-      setFilters((current) => ({ ...current, transactionType: "all" }));
-    }
-  }, [filters.sourceSystem, filters.transactionType]);
-
-  const selectedCampaign = dashboardData.campaigns.find((campaign) => campaign.id === filters.campaignId) ?? dashboardData.campaigns[0];
-  const filterFactor =
-    (filters.channel === "all" ? 1 : 0.76) *
-    (filters.sourceSystem === "all" ? 1 : filters.sourceSystem === "saving" ? 0.86 : 0.64) *
-    (filters.transactionType === "all" ? 1 : 0.72);
-
-  const filteredTrend = dashboardData.trends.map((item) => ({
-    ...item,
-    cifEarn: Math.round(item.cifEarn * filterFactor),
-    cifRedeem: Math.round(item.cifRedeem * filterFactor),
-    pointEarn: Math.round(item.pointEarn * filterFactor),
-    pointRedeem: Math.round(item.pointRedeem * filterFactor),
-  }));
-
-  const campaignComparison = [
-    { label: "Before", redeem: selectedCampaign.beforeRedeem, participants: Math.round(selectedCampaign.participants * 0.62) },
-    { label: "After", redeem: selectedCampaign.afterRedeem, participants: selectedCampaign.participants },
-  ];
-
-  return (
-    <div className="space-y-8">
-      <SectionHeader
-        eyebrow="Portal Back Office"
-        title="Analytics Dashboard"
-        description="Monitoring KPI loyalty untuk earning, redemption rate, estimated cost, liability, campaign, channel, dan trend comparison berbasis mock data."
-        action={
-          <>
-            <Button>
-              <FileText className="h-4 w-4" />
-              Export PDF
-            </Button>
-            <Button>
-              <FileImage className="h-4 w-4" />
-              Export PNG
-            </Button>
-          </>
-        }
-      />
-
-      <section className="surface p-5">
-        <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-950">
-          <Filter className="h-4 w-4 text-brand-600" />
-          Filter dashboard
-          <span className="ml-auto text-xs font-medium text-slate-500">Last updated: just now</span>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          <DateField label="Start date" value={filters.startDate} onChange={(startDate) => setFilters({ ...filters, startDate })} />
-          <DateField label="End date" value={filters.endDate} onChange={(endDate) => setFilters({ ...filters, endDate })} />
-          <SelectField label="Channel" value={filters.channel} options={channelOptions} onChange={(channel) => setFilters({ ...filters, channel: channel as DashboardFilters["channel"] })} />
-          <SelectField label="Source system" value={filters.sourceSystem} options={sourceSystemOptions} onChange={(sourceSystem) => setFilters({ ...filters, sourceSystem: sourceSystem as DashboardFilters["sourceSystem"] })} />
-          <SelectField
-            label="Transaction type"
-            value={filters.transactionType}
-            options={savingTransactionTypeOptions}
-            disabled={filters.sourceSystem !== "saving"}
-            onChange={(transactionType) => setFilters({ ...filters, transactionType: transactionType as DashboardFilters["transactionType"] })}
-          />
-        </div>
-      </section>
-
-      <AuditNotes />
-
-      <CardGrid title="Customer Engagement" items={dashboardData.customerEngagement} />
-      <CardGrid title="Poin Performance" items={dashboardData.pointPerformance} />
-      <CardGrid title="Transaction Impact" items={dashboardData.transactionImpact} />
-      <CardGrid title="Channel Performance" items={dashboardData.channelPerformance} />
-      <CardGrid title="Campaign" items={dashboardData.campaignCards} />
-
-      <div className="grid gap-5 xl:grid-cols-2">
-        <ChartPanel title="Daily / Weekly / Monthly trend" description="CIF earn, CIF redeem, point earn, dan point redeemed. Point values shown in millions.">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={filteredTrend} margin={{ left: 8, right: 12, top: 8, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="period" tickLine={false} axisLine={false} />
-              <YAxis tickLine={false} axisLine={false} width={44} />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="cifEarn" name="CIF Earn" stroke="#1570ef" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="cifRedeem" name="CIF Redeem" stroke="#12b76a" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="pointEarn" name="Point Earn M" stroke="#f79009" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="pointRedeem" name="Point Redeem M" stroke="#7a5af8" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartPanel>
-
-        <ChartPanel title="Earning poin per aktivitas" description="Distribusi earning berdasarkan aktivitas nasabah.">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dashboardData.earningByActivity} margin={{ left: 8, right: 12, top: 8, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="name" tickLine={false} axisLine={false} />
-              <YAxis tickLine={false} axisLine={false} width={40} />
-              <Tooltip />
-              <Bar dataKey="value" name="Point M" radius={[6, 6, 0, 0]} fill="#1570ef" />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartPanel>
-
-        <ChartPanel title="Earning poin per source" description="Saving vs Cardlink contribution.">
-          <DonutChart data={dashboardData.earningBySource} />
-        </ChartPanel>
-
-        <ChartPanel title="Redemption per channel" description="Total redemption point per channel.">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={dashboardData.redemptionByChannel} margin={{ left: 8, right: 12, top: 8, bottom: 8 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="name" tickLine={false} axisLine={false} />
-              <YAxis tickLine={false} axisLine={false} width={40} />
-              <Tooltip />
-              <Area type="monotone" dataKey="value" name="Point M" stroke="#1570ef" fill="#d9efff" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartPanel>
-
-        <ChartPanel title="Redemption per reward" description="Voucher, barang, donasi, e-wallet, dan annual fee.">
-          <DonutChart data={dashboardData.redemptionByReward} />
-        </ChartPanel>
-
-        <section className="surface p-5">
-          <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div>
-              <h3 className="text-base font-semibold text-slate-950">Before vs after campaign</h3>
-              <p className="mt-1 text-sm text-slate-500">Mock comparison by selected campaign and baseline period.</p>
-            </div>
-            <SelectField
-              label="Campaign"
-              value={filters.campaignId}
-              options={dashboardData.campaigns.map((campaign) => ({ value: campaign.id, label: campaign.name }))}
-              onChange={(campaignId) => setFilters({ ...filters, campaignId })}
-            />
-          </div>
-          <div className="h-[280px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={campaignComparison} margin={{ left: 8, right: 12, top: 8, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="label" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} width={44} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="redeem" name="Redeem M" radius={[6, 6, 0, 0]} fill="#1570ef" />
-                <Bar dataKey="participants" name="Participants" radius={[6, 6, 0, 0]} fill="#12b76a" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-      </div>
-    </div>
-  );
-}
-
-function DonutChart({ data }: { data: DistributionPoint[] }) {
-  return (
-    <div className="grid h-full min-h-0 gap-4 md:grid-cols-[1fr_180px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie data={data} dataKey="value" nameKey="name" innerRadius={64} outerRadius={96} paddingAngle={2}>
-            {data.map((entry, index) => (
-              <Cell key={entry.name} fill={colors[index % colors.length]} />
-            ))}
-          </Pie>
-          <Tooltip />
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="flex flex-col justify-center gap-3">
-        {data.map((item, index) => (
-          <div key={item.name} className="flex items-center justify-between gap-3 text-sm">
-            <span className="flex min-w-0 items-center gap-2 text-slate-600">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: colors[index % colors.length] }} />
-              <span className="truncate">{item.name}</span>
-            </span>
-            <span className="font-semibold text-slate-950">{item.value}M</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function SummaryCounters({ rules }: { rules: Rule[] }) {
   const statuses: RuleStatus[] = ["active", "inactive", "expired", "scheduled", "in_review", "draft"];
@@ -1472,7 +1152,7 @@ function App() {
         </header>
 
         <main className="mx-auto max-w-[1600px] px-4 py-6 md:px-8 md:py-8">
-          {route === "dashboard" && <Dashboard />}
+          {route === "dashboard" && <DashboardPage />}
           {route === "earning-rules" && (
             <RuleModule
               title="Earning Rule"

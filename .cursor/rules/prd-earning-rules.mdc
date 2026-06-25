@@ -1,0 +1,61 @@
+---
+description: PRD — Earning Rule module (route earning-rules)
+alwaysApply: false
+globs: src/domain/**,src/services/rule*,src/App.tsx
+---
+
+# Earning Rule Management
+
+**Route:** `earning-rules` · **Arch phase:** 1 · See `ARCHITECTURE.md` §4
+
+## Purpose
+
+Configure and review point-earning rules. Role-based editing and add/edit drawer with conditional fields per rule type.
+
+## Tab structure
+
+| Tab | Content | Status |
+|-----|---------|--------|
+| **General** (`PointConfig`) | Point logo, name, expiry/reset policy | **Not started** |
+| **Rule** | List, search, filter, drawer CRUD | Done (UI) |
+
+Tab General fields (planned): `point_logo`, `point_name`, `expired_duration_value` + unit, `reset_time`. No `PointConfig` type or UI yet.
+
+## Key UI
+
+- Role toggle: `employee` | `approver` (UI-only)
+- Summary counters per status (draft, in_review, scheduled, active, inactive, expired)
+- Search by name, code, or ID; status filter
+- Table: No, Rule, Period, Type, Status, Created time, Total CIF, Total point, Actions
+- Actions: Edit (role/status gated), Inactive on active rules (non-functional)
+- Add rule drawer — see `prd-rule-drawer`
+- Export CSV/XLSX (non-functional)
+
+## Permissions
+
+```
+employee  → edit draft only
+approver  → edit in_review, scheduled
+```
+
+(`canEdit` in `src/domain/ruleStatus.ts`)
+
+## User flows
+
+**Employee:** View table → search/filter → edit draft only → Add rule → drawer → Submit for review (no persistence).
+
+**Approver:** Toggle role → edit in_review and scheduled rules.
+
+## State & data
+
+`role`, `query`, `status`, `drawerOpen`, `drawerMode`, `drawerRule`, `selectedType`, `periodStart`/`periodEnd`
+
+Data: `getRulesByMode("EARN")` from `rules[]` in `src/data/mockData.ts`, type `Rule` from `src/domain/rule.ts`
+
+## Status
+
+| Capability | Status |
+|------------|--------|
+| Tab General | Not started |
+| Tab Rule — list, search, filter, drawer, period picker | Done (UI) |
+| Submit/save, inactive toggle, export | Non-functional |

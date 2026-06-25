@@ -1,0 +1,42 @@
+---
+description: PRD — Redemption Rule module (route redemption-rules)
+alwaysApply: false
+globs: src/domain/**,src/services/rule*,src/App.tsx
+---
+
+# Redemption Rule Management
+
+**Route:** `redemption-rules` · **Arch phase:** 1 · See `ARCHITECTURE.md` §4
+
+## Purpose
+
+Configure and review point-redemption rules. Same UX as earning rules with redemption-specific fields. Shares Rule Engine with `ruleMode: "REDEEM"` via `RuleModule`.
+
+**Note:** `PointConfig` (Tab General) lives under Earning Rule route only — redemption route has Rule tab only.
+
+## Key UI (beyond earning rules)
+
+- Extra table column: Cap type (`rule.redemption.capType`)
+- Drawer fields: Cap type, value point %, value min, value max
+
+**Cap types:** `cashback`, `discount`, `bill_payment`, `donasi`, `point_pihak_ketiga`, `kupon_undian`, `voucher`, `e_wallet`, `lelang`, `barang`, `annual_fee`
+
+**Open question:** `ruleTabId` and `sourceTypeId` on redemption mock data — Gap #4 in ARCHITECTURE.md §9.
+
+## User flow
+
+Same as earning rules (employee + approver). Redemption drawer fields when `ruleMode === "REDEEM"`. See `prd-rule-drawer` for drawer detail.
+
+## Permissions
+
+Identical to earning rules (`canEdit` in `src/domain/ruleStatus.ts`).
+
+## State & data
+
+Same as `RuleModule` with `ruleMode: "REDEEM"`. Data: `getRulesByMode("REDEEM")`, type `Rule` with optional `redemption: RedemptionHeader`.
+
+Mock: 5 redemption rules in `rules[]`.
+
+## Status
+
+Same as earning Rule tab — list, drawer, role-gated edit done (UI); submit/save, inactive toggle, export non-functional.

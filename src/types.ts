@@ -18,8 +18,20 @@ export type TransactionType =
   | "outgoing-transfer"
   | "va";
 
+export type TxnSourceSystem = "saving" | "cardlink";
+export type TxnChannel = "API" | "Wondr" | "SMS" | "BNI Direct" | "Mbank" | "ATM";
+export type TxnTransactionType =
+  | "purchase"
+  | "payment"
+  | "ingoing_transfer"
+  | "outgoing_transfer"
+  | "va";
+export type RewardType = "voucher" | "barang" | "donasi" | "cashback" | "e-wallet";
+export type PointDirection = "EARN" | "REDEEM" | "EXPIRE";
+
 export type RuleStatus = "draft" | "in_review" | "scheduled" | "active" | "inactive" | "expired";
 export type Role = "employee" | "approver";
+export type DashboardRole = "employee" | "approver" | "admin";
 export type RuleType =
   | "transactional"
   | "activity"
@@ -43,13 +55,37 @@ export type DashboardFilters = {
   campaignId: string;
 };
 
-export type KpiCard = {
-  label: string;
-  value: string;
-  detail: string;
-  delta: string;
-  trend: "up" | "down" | "flat";
+export type PointTransaction = {
+  id: string;
+  date: string;
+  cifId: string;
+  direction: PointDirection;
+  points: number;
+  channel: TxnChannel;
+  sourceSystem: TxnSourceSystem;
+  transactionType?: TxnTransactionType;
+  rewardType?: RewardType;
+  campaignId?: string;
 };
+
+export type Campaign = {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  targetUserCount: number;
+  participantCifIds: string[];
+  status: "active" | "ended";
+};
+
+export type ReconciliationRun = {
+  timestamp: string;
+  status: "completed";
+  recordsChecked: number;
+  mismatchesFound: number;
+};
+
+export type TrendGranularity = "daily" | "weekly" | "monthly";
 
 export type TrendPoint = {
   period: string;
@@ -64,28 +100,20 @@ export type DistributionPoint = {
   value: number;
 };
 
-export type CampaignSummary = {
-  id: string;
-  name: string;
-  active: boolean;
-  targetUsers: number;
-  participants: number;
-  beforeRedeem: number;
-  afterRedeem: number;
+export type KpiTrend = "up" | "down" | "flat";
+
+export type ComputedKpi = {
+  label: string;
+  value: string;
+  detail: string;
+  trend: KpiTrend;
+  sparkline?: number[];
 };
 
-export type DashboardData = {
-  customerEngagement: KpiCard[];
-  pointPerformance: KpiCard[];
-  transactionImpact: KpiCard[];
-  channelPerformance: KpiCard[];
-  campaignCards: KpiCard[];
-  trends: TrendPoint[];
-  earningByActivity: DistributionPoint[];
-  earningBySource: DistributionPoint[];
-  redemptionByChannel: DistributionPoint[];
-  redemptionByReward: DistributionPoint[];
-  campaigns: CampaignSummary[];
+export type TbdKpi = {
+  label: string;
+  status: "tbd";
+  detail: string;
 };
 
 export type { CapType, RedemptionHeader, Rule, RuleConfig, RuleMode } from "./domain/rule";

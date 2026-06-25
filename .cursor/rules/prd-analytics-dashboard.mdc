@@ -1,0 +1,69 @@
+---
+description: PRD — Analytics Dashboard (route dashboard)
+alwaysApply: false
+---
+# Analytics Dashboard
+
+**Route:** `dashboard` · **Arch phase:** 3 · See `ARCHITECTURE.md` §6
+
+## Purpose
+
+Monitor loyalty KPIs: customer engagement, point performance, transaction impact, channel performance, and campaigns. Prototype uses seeded `PointTransaction[]` + client-side `aggregations.ts`; production KPI definitions in ARCHITECTURE.md §6.1.
+
+**Visual design:** Uses the existing portal design system (brand/slate Tailwind tokens), not the ledger theme from the greenfield PRD.
+
+## Key UI
+
+**Header:** "Loyalty Analytics" + Role switcher (Employee / Approver / Admin) + Export menu (PDF/PNG).
+
+**Filters:** Start/end date, channel, source system, transaction type (hidden unless source = Saving). All filters apply globally.
+
+**KPI groups:** Customer Engagement, Point Performance, Cost (TBD placeholder), Transaction Impact, Channel Performance, Campaign — each defined card shows value, detail, sparkline (or TBD dashed placeholder).
+
+**Charts:** Daily/weekly/monthly trend (line + granularity toggle), MoM/YoY growth, channel performance panel (bar + reward donut), campaign performance panel, before/after campaign (14-day default window stepper).
+
+**Other:** Client-side export (html2canvas + jsPDF), reconciliation panel (mock run, role-gated), no real-time polling.
+
+## User flow
+
+1. Default route on load
+2. Review KPIs and charts (all driven by `aggregations.ts`)
+3. Adjust filters — every KPI and chart recomputes from filtered transactions
+4. If source ≠ Saving, transaction type resets to "all" and field hides
+5. Toggle trend granularity; select campaign and adjust before/after window
+6. Approver/Admin: run mock reconciliation and review run log
+7. Export current dashboard view as PDF or PNG
+
+## State & data
+
+- `filters: DashboardFilters` in `DashboardPage`
+- `role: DashboardRole` — reconciliation gating only (independent of rule-module role)
+- `mockTransactions`, `mockCampaigns` from `src/data/dashboardMockGenerator.ts` (via `mockData.ts`)
+- KPI logic in `src/data/aggregations.ts` — swap point for API later
+
+## TBD placeholders (never fabricated)
+
+- Redemption rate (by point) — "Definition pending"
+- Cost category — "Cost — definition pending with business team"
+
+## Status
+
+| Capability | Status |
+|------------|--------|
+| KPI cards + sparklines | Done (computed mock) |
+| Charts + growth + campaign compare | Done (computed mock) |
+| Filters | Done — global |
+| Export PDF/PNG | Done (client-side) |
+| Reconciliation mock | Done (role-gated) |
+| Real-time SLA | Undefined |
+
+## Source files
+
+- `src/components/dashboard/DashboardPage.tsx` — orchestrator
+- `src/components/dashboard/*` — FilterBar, KpiGrid, TrendChart, etc.
+- `src/data/aggregations.ts` — pure KPI functions
+- `src/data/dashboardMockGenerator.ts` — seeded transaction generator
+
+## Open items
+
+Metric formulas for TBD KPIs, filter option sources in production, drill-down targets — see `FEATURES.md` Open Items and `ARCHITECTURE.md` §9 gaps #8–15.

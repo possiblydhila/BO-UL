@@ -4,7 +4,7 @@
 **Scope:** Earning Rule, Redemption Rule, Analytics Dashboard, Reporting  
 **Out of scope here:** User module, Rewards Points Management (referenced where dependencies exist)
 
-**Related docs:** For front-end prototype feature status, UI flows, and mock data shapes, see [FEATURES.md](FEATURES.md). Rule lifecycle state diagram is documented there — not duplicated below.
+**Related docs:** For front-end prototype feature status, UI flows, and mock data shapes, see [FEATURES.md](FEATURES.md). Rule lifecycle state diagram is documented there — not duplicated below. Per-module Cursor agent PRDs live in `.cursor/rules/` — keep them in sync via [FEATURES.md → Cursor PRD rules](FEATURES.md#cursor-prd-rules).
 
 ---
 
@@ -391,7 +391,7 @@ Maps architecture concepts to the current `banking-loyalty-back-office` React pr
 | Redemption `CAP_TYPE` + value fields | `Rule.redemption` (`RedemptionHeader`) | Done (UI) | Present in drawer + table column when `ruleMode === "REDEEM"` |
 | `ruleTabId` / `sourceTypeId` | `RedemptionHeader` in mock data | Present, undefined | Gap #4 — needs business clarification |
 | Third-party points (partner blocks + tiers) | `ThirdPartyPointsRuleFields` in `src/App.tsx` | UI mock (Update 2) | Nested blocks/tiers/caps per §4.4.1; Gap #16 open |
-| Analytics KPIs + data mart | `dashboardData` in `src/data/mockData.ts` | UI only | Phase 3; formulas still open (FEATURES audit panel) |
+| Analytics KPIs + data mart | `mockTransactions` + `aggregations.ts` | UI + client aggregation | Phase 3; redemption-by-point and Cost KPIs TBD |
 | Reporting six tabs | `reporting` route | Tabs only | Phase 4 |
 | Point expiry job | — | N/A in prototype | Depends on Tab General semantics (Gap #5 partial) |
 | API surface (§4.6) | — | Not built | Target contract for Phase 1 backend |

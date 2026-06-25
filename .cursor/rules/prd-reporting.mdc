@@ -1,0 +1,35 @@
+---
+description: PRD — Reporting module (route reporting)
+alwaysApply: false
+---
+
+# Reporting
+
+**Route:** `reporting` · **Arch phase:** 4 · See `ARCHITECTURE.md` §7
+
+## Purpose
+
+Centralized reporting for earning, redemption, manual operations, pembukuan, and reconciliation.
+
+## Current state
+
+Tab bar with 6 report types. Content area is dashed placeholder. Only tab switching works.
+
+## Report tabs
+
+| Tab | Description | Arch. data source |
+|-----|-------------|-------------------|
+| Earning Poin | Earning point reports | `fact_point_transaction` (EARN) |
+| Redemption Poin | Redemption point reports | `fact_point_transaction` (REDEEM) |
+| Manual Adjustment | Manual point adjustments | `manual_adjustment` |
+| Manual Redemption | Manual redemption ops | Separate manual ops table |
+| Hasil pemrosesan pembukuan | Bookkeeping results | Posting job-run log |
+| Hasil rekonsiliasi sistem | Reconciliation results | `reconciliation_run` |
+
+## Planned scope (per tab)
+
+Report table, filters, export actions, reconciliation status.
+
+## Implementation notes
+
+Replace `ReportingPlaceholder` in `src/App.tsx`. Reconciliation workflow ownership TBD — see ARCHITECTURE.md §9 gap #13. Cross-reference dashboard audit items for finance governance (gap #15).

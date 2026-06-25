@@ -1,0 +1,51 @@
+---
+description: PRD — Shared rule add/edit drawer (earning + redemption)
+alwaysApply: false
+globs: src/domain/**,src/services/rule*,src/components/DateRangeField.tsx,src/utils/points.ts,src/App.tsx
+---
+
+# Rule Drawer (Shared)
+
+Used by Earning and Redemption rule modules. Side panel for create/edit; fields change by `RuleType`.
+
+## Base fields (all types)
+
+- Rule name, Rule code
+- **Rule period** — `DateRangeField` (`src/components/DateRangeField.tsx`), `periodStart`/`periodEnd`, synced on drawer open
+- Rule type selector
+
+## Redemption-only fields
+
+Cap type, value point %, value min, value max
+
+## Conditional fields by rule type
+
+| Rule Type | Key fields |
+|-----------|------------|
+| `activity` | Activity type, amount field, receive/redeem point |
+| `third_party_points` | Card type multi-select; repeatable Partner Earning Blocks (tier table + per-block caps) — ARCH §4.4.1 |
+| `personal_earning` | Type (birthday), target user CSV, reward type, receive point |
+| `transactional` | Source system, transaction type, merchant, card, channel, amount, conversion unit, multiplier, caps |
+| `tactical` | Campaign name, target user, reward type + all transactional fields |
+
+## Point calculation
+
+`calculatePoints()` in `src/utils/points.ts`:
+
+```
+floor((transactionAmount / conversionUnit) × multiplier)
+Example: (500,000 / 100,000) × 10 = 50 poin
+```
+
+## Actions
+
+| Action | Add | Edit | Persistence |
+|--------|-----|------|-------------|
+| Cancel | ✓ | ✓ | — |
+| Submit for review / Save changes | ✓ | ✓ | Non-functional |
+
+## Rule lifecycle
+
+`draft` → `in_review` (Submit) → `scheduled` (Approve) → `active` (GoLive) → `inactive` | `expired`
+
+Guards in `src/domain/ruleStatus.ts`, workflow stubs in `src/services/ruleWorkflow.ts`.

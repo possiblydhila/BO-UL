@@ -1,0 +1,26 @@
+---
+description: PRD — Rewards Points Management (route rewards) — placeholder
+alwaysApply: false
+---
+
+# Rewards Points Management
+
+**Route:** `rewards` · **Arch phase:** Out of scope; needed before Phase 2 eval engine
+
+## Purpose
+
+Future module for reward catalog and stock management.
+
+## Current state
+
+Navigation slot only. Placeholder: "Ready for next detail pass".
+
+## Planned scope
+
+- Reward catalog (voucher, barang, e-wallet, etc.)
+- Stock and availability tracking
+- Linkage to redemption rules
+
+## Implementation notes
+
+When building this module, replace `PlaceholderPage` in `src/App.tsx` for `route === "rewards"`. Reward types should align with redemption `capType` values where applicable. See `prd-redemption-rules` for redemption linkage.
