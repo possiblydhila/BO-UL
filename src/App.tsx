@@ -28,19 +28,30 @@ import {
   PanelRightOpen,
   Plus,
   Search,
+  Upload,
   X,
 } from "lucide-react";
 import {
   auditNotes,
+  cardTypeOptions,
   channelOptions,
   dashboardData,
   earningRules,
+  maxCapacityTimeframeOptions,
+  maxCapacityTypeOptions,
+  merchantCategoryOptions,
+  merchantNameOptions,
   navItems,
   redemptionRules,
   reportTabs,
+  rewardTypeOptions,
+  ruleChannelOptions,
+  ruleSourceSystemOptions,
+  ruleTransactionTypeOptions,
   savingTransactionTypeOptions,
   sourceSystemOptions,
   statusLabels,
+  targetUserOptions,
 } from "./data/mockData";
 import type {
   DashboardFilters,
@@ -759,6 +770,151 @@ function MockInput({ label, value, placeholder }: { label: string; value?: strin
   );
 }
 
+function FileUploadField({
+  label,
+  description,
+  accept,
+  file,
+  onFileChange,
+  className = "",
+}: {
+  label: string;
+  description?: string;
+  accept: string;
+  file: File | null;
+  onFileChange: (file: File | null) => void;
+  className?: string;
+}) {
+  const inputId = `file-upload-${label.replace(/\s+/g, "-").toLowerCase()}`;
+
+  return (
+    <div className={className}>
+      <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
+      <label
+        htmlFor={inputId}
+        className="focus-ring flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center transition hover:border-brand-300 hover:bg-brand-50/50"
+      >
+        <Upload className="h-5 w-5 text-slate-400" />
+        <span className="text-sm font-semibold text-slate-700">
+          {file ? file.name : "Choose CSV or XLSX file"}
+        </span>
+        {description && <span className="text-xs text-slate-500">{description}</span>}
+        <input
+          id={inputId}
+          type="file"
+          accept={accept}
+          className="sr-only"
+          onChange={(event) => onFileChange(event.target.files?.[0] ?? null)}
+        />
+      </label>
+      {file && (
+        <button
+          type="button"
+          onClick={() => onFileChange(null)}
+          className="focus-ring mt-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+        >
+          Remove file
+        </button>
+      )}
+    </div>
+  );
+}
+
+function TacticalRuleFields() {
+  const [targetUser, setTargetUser] = useState(targetUserOptions[0].value);
+  const [rewardType, setRewardType] = useState(rewardTypeOptions[0].value);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+
+  return (
+    <>
+      <MockInput label="Campaign/event name" value="HUT BNI" />
+      <SelectField
+        label="Target user"
+        value={targetUser}
+        options={targetUserOptions}
+        onChange={(value) => {
+          setTargetUser(value);
+          if (value !== "limited") setUploadedFile(null);
+        }}
+      />
+      {targetUser === "limited" && (
+        <FileUploadField
+          className="sm:col-span-2"
+          label="Target user list"
+          description="Upload a CSV or XLSX file with the limited target user list"
+          accept=".csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+          file={uploadedFile}
+          onFileChange={setUploadedFile}
+        />
+      )}
+      <SelectField
+        label="Reward type"
+        value={rewardType}
+        options={rewardTypeOptions}
+        onChange={setRewardType}
+      />
+    </>
+  );
+}
+
+function TransactionalRuleFields() {
+  const [sourceSystem, setSourceSystem] = useState(ruleSourceSystemOptions[0].value);
+  const [transactionType, setTransactionType] = useState(ruleTransactionTypeOptions[0].value);
+  const [merchantCategory, setMerchantCategory] = useState(merchantCategoryOptions[0].value);
+  const [merchantName, setMerchantName] = useState(merchantNameOptions[0].value);
+  const [cardType, setCardType] = useState(cardTypeOptions[0].value);
+  const [channel, setChannel] = useState<string>(ruleChannelOptions[0].value);
+  const [maxCapacityType, setMaxCapacityType] = useState(maxCapacityTypeOptions[0].value);
+  const [maxCapacityTimeframe, setMaxCapacityTimeframe] = useState(maxCapacityTimeframeOptions[0].value);
+
+  return (
+    <>
+      <SelectField
+        label="Source system"
+        value={sourceSystem}
+        options={ruleSourceSystemOptions}
+        onChange={setSourceSystem}
+      />
+      <SelectField
+        label="Transaction type"
+        value={transactionType}
+        options={ruleTransactionTypeOptions}
+        onChange={setTransactionType}
+      />
+      <SelectField
+        label="Merchant category"
+        value={merchantCategory}
+        options={merchantCategoryOptions}
+        onChange={setMerchantCategory}
+      />
+      <SelectField
+        label="Merchant name"
+        value={merchantName}
+        options={merchantNameOptions}
+        onChange={setMerchantName}
+      />
+      <SelectField label="Card type" value={cardType} options={cardTypeOptions} onChange={setCardType} />
+      <SelectField label="Channel" value={channel} options={ruleChannelOptions} onChange={setChannel} />
+      <MockInput label="Transaction amount" value="500000" />
+      <MockInput label="Conversion unit" value="100000" />
+      <MockInput label="Multiplier" value="10" />
+      <MockInput label="Max capacity" value="2000000 point" />
+      <SelectField
+        label="Type max capacity"
+        value={maxCapacityType}
+        options={maxCapacityTypeOptions}
+        onChange={setMaxCapacityType}
+      />
+      <SelectField
+        label="Timeframe max capacity"
+        value={maxCapacityTimeframe}
+        options={maxCapacityTimeframeOptions}
+        onChange={setMaxCapacityTimeframe}
+      />
+    </>
+  );
+}
+
 function ConditionalRuleFields({ selectedType, kind }: { selectedType: RuleType; kind: "earning" | "redemption" }) {
   if (selectedType === "activity") {
     return (
@@ -795,25 +951,8 @@ function ConditionalRuleFields({ selectedType, kind }: { selectedType: RuleType;
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      {selectedType === "tactical" && (
-        <>
-          <MockInput label="Campaign/event name" value="HUT BNI" />
-          <MockInput label="Target user" value="all user / limited" />
-          <MockInput label="Reward type" value="bonus point / transactional" />
-        </>
-      )}
-      <MockInput label="Source system" value="saving / cardlink" />
-      <MockInput label="Transaction type" value="purchase / payment / TC 40" />
-      <MockInput label="Merchant category" value="marketplace, retail, travel" />
-      <MockInput label="Merchant name" value="indomaret tpfg melati jat" />
-      <MockInput label="Card type" value="bic platinum staff" />
-      <MockInput label="Channel" value="API - 0986, Wondr - 0981" />
-      <MockInput label="Transaction amount" value="500000" />
-      <MockInput label="Conversion unit" value="100000" />
-      <MockInput label="Multiplier" value="10" />
-      <MockInput label="Max capacity" value="2000000 point" />
-      <MockInput label="Type max capacity" value="per transaksi / per fitur / user" />
-      <MockInput label="Timeframe max capacity" value="daily / monthly" />
+      {selectedType === "tactical" && <TacticalRuleFields />}
+      <TransactionalRuleFields />
     </div>
   );
 }

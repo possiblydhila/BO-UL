@@ -83,6 +83,58 @@ export const savingTransactionTypeOptions: { value: TransactionType; label: stri
   { value: "va", label: "Virtual account" },
 ];
 
+export const ruleSourceSystemOptions = [
+  { value: "saving", label: "Saving" },
+  { value: "cardlink", label: "Cardlink" },
+];
+
+export const ruleTransactionTypeOptions = [
+  { value: "purchase", label: "Purchase" },
+  { value: "payment", label: "Payment" },
+  { value: "tc-40", label: "TC 40" },
+];
+
+export const merchantCategoryOptions = [
+  { value: "marketplace", label: "Marketplace" },
+  { value: "retail", label: "Retail" },
+  { value: "travel", label: "Travel" },
+];
+
+export const merchantNameOptions = [
+  { value: "indomaret-tpfg-melati-jat", label: "Indomaret TPFG Melati Jat" },
+  { value: "tokopedia", label: "Tokopedia" },
+  { value: "traveloka", label: "Traveloka" },
+];
+
+export const cardTypeOptions = [
+  { value: "bic-platinum-staff", label: "BIC Platinum Staff" },
+  { value: "bic-co-cobranding-biru-a", label: "BIC Co Cobranding Biru A" },
+  { value: "bic-gold", label: "BIC Gold" },
+];
+
+export const ruleChannelOptions = channelOptions.filter((option) => option.value !== "all");
+
+export const maxCapacityTypeOptions = [
+  { value: "per-transaksi", label: "Per transaksi" },
+  { value: "per-fitur", label: "Per fitur" },
+  { value: "per-user", label: "Per user" },
+];
+
+export const maxCapacityTimeframeOptions = [
+  { value: "daily", label: "Daily" },
+  { value: "monthly", label: "Monthly" },
+];
+
+export const targetUserOptions = [
+  { value: "all", label: "All user" },
+  { value: "limited", label: "Limited" },
+];
+
+export const rewardTypeOptions = [
+  { value: "bonus_point", label: "Bonus point" },
+  { value: "transactional", label: "Transactional" },
+];
+
 export const statusLabels: Record<RuleStatus, string> = {
   draft: "Draft",
   in_review: "In Review",
