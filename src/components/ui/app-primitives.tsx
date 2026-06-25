@@ -1,4 +1,5 @@
 import type { ComponentType, HTMLAttributes, ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { Badge as UiBadge } from "@/components/base/badges/badges";
 import { Button as UiButton } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
@@ -172,12 +173,38 @@ export function MockInput({
   label,
   value,
   placeholder,
+  onChange,
+  disabled,
 }: {
   label: string;
   value?: string;
   placeholder?: string;
+  onChange?: (value: string) => void;
+  disabled?: boolean;
 }) {
-  return <Input label={label} value={value ?? ""} placeholder={placeholder} isReadOnly />;
+  const [internalValue, setInternalValue] = useState(value ?? "");
+
+  useEffect(() => {
+    setInternalValue(value ?? "");
+  }, [value]);
+
+  const handleChange = (next: string) => {
+    if (onChange) {
+      onChange(next);
+    } else {
+      setInternalValue(next);
+    }
+  };
+
+  return (
+    <Input
+      label={label}
+      value={onChange ? (value ?? "") : internalValue}
+      placeholder={placeholder}
+      isDisabled={disabled}
+      onChange={handleChange}
+    />
+  );
 }
 
 export function SectionIcon({

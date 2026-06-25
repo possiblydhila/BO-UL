@@ -30,7 +30,6 @@ import {
   defaultPointConfig,
   expiredDurationUnitOptions,
   balanceResetMonthOptions,
-  getRulesByMode,
   maxCapacityTimeframeOptions,
   maxCapacityTypeOptions,
   merchantCategoryOptions,
@@ -41,6 +40,7 @@ import {
   reportTabs,
   rewardTypeOptions,
   ruleChannelOptions,
+  rules as initialRules,
   ruleSourceSystemOptions,
   ruleTransactionTypeOptions,
   statusLabels,
@@ -50,7 +50,7 @@ import {
 import type { Rule, RuleMode } from "./domain/rule";
 import { formatAnnualBalanceResetDate, formatExpiryPolicySummary } from "./domain/pointConfig";
 import type { PointConfig } from "./domain/pointConfig";
-import { formatCapType } from "./domain/rule";
+import { formatCapType, redemptionCapTypeOptions, type CapType } from "./domain/rule";
 import type { PersonalEarningConfig, TacticalConfig, TransactionalFields } from "./domain/rule";
 import {
   asActivityConfig,
@@ -60,7 +60,13 @@ import {
   getTransactionalFields,
 } from "./domain/ruleConfig";
 import { canEdit } from "./domain/ruleStatus";
-import { filterRules } from "./services/ruleQueries";
+import { filterRules, getRulesByMode } from "./services/ruleQueries";
+import {
+  createRuleFromForm,
+  updateRuleFromForm,
+  validateRuleForm,
+  type RuleFormValues,
+} from "./services/ruleMutations";
 import type { Role, RouteKey, RuleStatus, RuleType } from "./types";
 import { calculatePoints, formatCompact, formatNumber } from "./utils/points";
 import { cx } from "./utils/cx";
@@ -121,12 +127,16 @@ function RuleModule({
   title,
   description,
   rules,
+  allRules,
   ruleMode,
+  onRulesChange,
 }: {
   title: string;
   description: string;
   rules: Rule[];
+  allRules: Rule[];
   ruleMode: RuleMode;
+  onRulesChange: (rules: Rule[]) => void;
 }) {
   const [role, setRole] = useState<Role>("employee");
   const [query, setQuery] = useState("");
@@ -158,6 +168,21 @@ function RuleModule({
     setDrawerRule(rule);
     setSelectedType(rule.type);
     setDrawerOpen(true);
+  }
+
+  function handleSaveRule(values: RuleFormValues) {
+    const nextRule =
+      drawerMode === "add"
+        ? createRuleFromForm(allRules, ruleMode, values)
+        : updateRuleFromForm(drawerRule!, values);
+
+    onRulesChange(
+      drawerMode === "add"
+        ? [...allRules, nextRule]
+        : allRules.map((item) => (item.id === nextRule.id ? nextRule : item)),
+    );
+    setDrawerRule(null);
+    setDrawerOpen(false);
   }
 
   return (
@@ -281,6 +306,7 @@ function RuleModule({
           setDrawerRule(null);
           setDrawerOpen(false);
         }}
+        onSave={handleSaveRule}
       />
     </div>
   );
@@ -294,6 +320,7 @@ function RuleDrawer({
   selectedType,
   onTypeChange,
   onClose,
+  onSave,
 }: {
   open: boolean;
   mode: "add" | "edit";
@@ -302,20 +329,55 @@ function RuleDrawer({
   selectedType: RuleType;
   onTypeChange: (type: RuleType) => void;
   onClose: () => void;
+  onSave: (values: RuleFormValues) => void;
 }) {
+  const [ruleName, setRuleName] = useState("");
+  const [ruleCode, setRuleCode] = useState("");
   const [periodStart, setPeriodStart] = useState("");
   const [periodEnd, setPeriodEnd] = useState("");
+  const [capType, setCapType] = useState<CapType>("voucher");
+  const [valuePointPercentage, setValuePointPercentage] = useState(100);
+  const [valueMin, setValueMin] = useState(50000);
+  const [valueMax, setValueMax] = useState(500000);
   const [expanded, setExpanded] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
+    setRuleName(rule?.name ?? "");
+    setRuleCode(rule?.code ?? "");
     setPeriodStart(rule?.periodStart ?? "");
     setPeriodEnd(rule?.periodEnd ?? "");
+    setCapType(rule?.redemption?.capType ?? "voucher");
+    setValuePointPercentage(rule?.redemption?.valuePointPercentage ?? 100);
+    setValueMin(rule?.redemption?.valueMin ?? 50000);
+    setValueMax(rule?.redemption?.valueMax ?? 500000);
+    setFormError(null);
   }, [open, rule]);
 
   useEffect(() => {
     if (!open) setExpanded(false);
   }, [open]);
+
+  function handleSubmit() {
+    const values: RuleFormValues = {
+      name: ruleName,
+      code: ruleCode,
+      periodStart,
+      periodEnd,
+      type: selectedType,
+      capType: ruleMode === "REDEEM" ? capType : undefined,
+      valuePointPercentage: ruleMode === "REDEEM" ? valuePointPercentage : undefined,
+      valueMin: ruleMode === "REDEEM" ? valueMin : undefined,
+      valueMax: ruleMode === "REDEEM" ? valueMax : undefined,
+    };
+    const error = validateRuleForm(values);
+    if (error) {
+      setFormError(error);
+      return;
+    }
+    onSave(values);
+  }
 
   if (!open) return null;
   const examplePoints = calculatePoints(500000, 100000, 10);
@@ -349,8 +411,18 @@ function RuleDrawer({
         </div>
         <div className="flex-1 overflow-y-auto p-6">
           <div className={cx("grid gap-4", expanded && "mx-auto w-full max-w-6xl")}>
-            <MockInput label="Rule name" value={rule?.name ?? ""} placeholder="Input rule name" />
-            <MockInput label="Rule code" value={rule?.code ?? ""} placeholder="EARN-PAY-001" />
+            <TextField
+              label="Rule name"
+              value={ruleName}
+              placeholder="Input rule name"
+              onChange={setRuleName}
+            />
+            <TextField
+              label="Rule code"
+              value={ruleCode}
+              placeholder="EARN-PAY-001"
+              onChange={setRuleCode}
+            />
             <DateRangeField
               label="Rule period"
               periodStart={periodStart}
@@ -362,13 +434,19 @@ function RuleDrawer({
             />
             {ruleMode === "REDEEM" && (
               <div className="grid gap-4 sm:grid-cols-2">
-                <MockInput
+                <SelectField
                   label="Cap type"
-                  value={rule?.redemption?.capType ? formatCapType(rule.redemption.capType) : "voucher"}
+                  value={capType}
+                  options={redemptionCapTypeOptions}
+                  onChange={(value) => setCapType(value as CapType)}
                 />
-                <MockInput label="Value point percentage" value={`${rule?.redemption?.valuePointPercentage ?? 100}`} />
-                <MockInput label="Value min" value={`${rule?.redemption?.valueMin ?? 50000}`} />
-                <MockInput label="Value max" value={`${rule?.redemption?.valueMax ?? 500000}`} />
+                <NumberField
+                  label="Value point percentage"
+                  value={valuePointPercentage}
+                  onChange={setValuePointPercentage}
+                />
+                <NumberField label="Value min" value={valueMin} onChange={setValueMin} />
+                <NumberField label="Value max" value={valueMax} onChange={setValueMax} />
               </div>
             )}
             <SelectField
@@ -384,9 +462,12 @@ function RuleDrawer({
             </div>
           </div>
         </div>
-        <div className="flex justify-end gap-3 border-t border-secondary p-4">
+        <div className="flex items-center gap-3 border-t border-secondary p-4">
+          {formError && <p className="mr-auto text-sm text-error-primary">{formError}</p>}
           <Button onClick={onClose}>Cancel</Button>
-          <Button variant="primary">{mode === "add" ? "Submit for review" : "Save changes"}</Button>
+          <Button variant="primary" onClick={handleSubmit}>
+            {mode === "add" ? "Submit for review" : "Save changes"}
+          </Button>
         </div>
       </aside>
     </div>
@@ -675,11 +756,13 @@ function PartnerTierRow({
             label="Transaction amount (min)"
             value={tier.transactionAmountMin}
             placeholder="100001"
+            onChange={(transactionAmountMin) => onChange({ ...tier, transactionAmountMin })}
           />
           <MockInput
             label="Transaction amount (max)"
             value={tier.transactionAmountMax}
             placeholder="200000"
+            onChange={(transactionAmountMax) => onChange({ ...tier, transactionAmountMax })}
           />
         </>
       ) : (
@@ -687,9 +770,15 @@ function PartnerTierRow({
           label="Transaction amount"
           value={tier.transactionAmount}
           placeholder={tier.operatorType === "lt" ? "100000" : "200000"}
+          onChange={(transactionAmount) => onChange({ ...tier, transactionAmount })}
         />
       )}
-      <MockInput label="Miles point" value={tier.milesPoint} placeholder="5" />
+      <MockInput
+        label="Miles point"
+        value={tier.milesPoint}
+        placeholder="5"
+        onChange={(milesPoint) => onChange({ ...tier, milesPoint })}
+      />
       {canRemove && (
         <div className="flex items-end sm:col-span-2">
           <Button variant="ghost" onClick={onRemove}>
@@ -776,7 +865,12 @@ function PartnerBlockCard({
             options={partnerCapTimeframeOptions}
             onChange={(timeframe) => onChange({ ...block, timeframe })}
           />
-          <MockInput label="Max capacity (miles)" value={block.maxCapacity} placeholder="30" />
+          <MockInput
+            label="Max capacity (miles)"
+            value={block.maxCapacity}
+            placeholder="30"
+            onChange={(maxCapacity) => onChange({ ...block, maxCapacity })}
+          />
         </div>
       </div>
     </section>
@@ -1240,6 +1334,7 @@ function ReportingPlaceholder() {
 
 function App() {
   const [route, setRoute] = useState<RouteKey>("dashboard");
+  const [allRules, setAllRules] = useState<Rule[]>(() => [...initialRules]);
   const activeItem = navItems.find((item) => item.key === route) ?? navItems[0];
 
   return (
@@ -1250,16 +1345,20 @@ function App() {
         <RuleModule
           title="Earning Rule"
           description="Konfigurasi aturan, skema, dan parameter perolehan poin pengguna."
-          rules={getRulesByMode("EARN")}
+          rules={getRulesByMode(allRules, "EARN")}
+          allRules={allRules}
           ruleMode="EARN"
+          onRulesChange={setAllRules}
         />
       )}
       {route === "redemption-rules" && (
         <RuleModule
           title="Redemption Rule"
           description="Konfigurasi aturan, skema, dan parameter penukaran poin pengguna."
-          rules={getRulesByMode("REDEEM")}
+          rules={getRulesByMode(allRules, "REDEEM")}
+          allRules={allRules}
           ruleMode="REDEEM"
+          onRulesChange={setAllRules}
         />
       )}
       {route === "users" && <PlaceholderPage title="User" description="Daftar, profil, dan informasi menyeluruh terkait pengguna sistem loyalty." />}

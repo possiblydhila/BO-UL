@@ -120,3 +120,17 @@ export type Rule = {
 export function formatCapType(value: CapType) {
   return value.replace(/_/g, " ");
 }
+
+export const redemptionCapTypeOptions: { value: CapType; label: string }[] = [
+  { value: "cashback", label: "cashback" },
+  { value: "discount", label: "discount" },
+  { value: "bill_payment", label: "bill payment" },
+  { value: "donasi", label: "donasi" },
+  { value: "point_pihak_ketiga", label: "point pihak ketiga" },
+  { value: "kupon_undian", label: "kupon undian" },
+  { value: "voucher", label: "voucher" },
+  { value: "e_wallet", label: "e wallet" },
+  { value: "lelang", label: "lelang" },
+  { value: "barang", label: "barang" },
+  { value: "annual_fee", label: "annual fee" },
+];
