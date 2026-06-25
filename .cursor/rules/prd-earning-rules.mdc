@@ -45,6 +45,17 @@ approver  → edit in_review, scheduled
 
 Data: `getRulesByMode("EARN")` from `rules[]` in `src/data/mockData.ts`, type `Rule` from `src/domain/rule.ts`
 
+## Transactional drawer — transaction type by source system
+
+When rule type is `transactional` or `tactical` (transactional fields), **Transaction type** options depend on **Source system**:
+
+| Source system | Transaction type options |
+|---------------|-------------------------|
+| `saving` | Purchase, Payment |
+| `cardlink` | TC 40 |
+
+Switching source system resets transaction type to the first valid option when the current value is not allowed (`getRuleTransactionTypeOptions` in `src/data/mockData.ts`).
+
 ## Status
 
 | Capability | Status |

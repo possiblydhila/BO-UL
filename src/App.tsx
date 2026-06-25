@@ -41,8 +41,8 @@ import {
   rewardTypeOptions,
   ruleChannelOptions,
   rules as initialRules,
+  getRuleTransactionTypeOptions,
   ruleSourceSystemOptions,
-  ruleTransactionTypeOptions,
   statusLabels,
   targetUserOptions,
   thirdPartyProgramOptions,
@@ -67,7 +67,7 @@ import {
   validateRuleForm,
   type RuleFormValues,
 } from "./services/ruleMutations";
-import type { Role, RouteKey, RuleStatus, RuleType } from "./types";
+import type { Role, RouteKey, RuleStatus, RuleTransactionType, RuleType } from "./types";
 import { calculatePoints, formatCompact, formatNumber } from "./utils/points";
 import { cx } from "./utils/cx";
 import { DateRangeField } from "./components/DateRangeField";
@@ -940,12 +940,31 @@ function ThirdPartyPointsRuleFields({ rule }: { rule: Rule | null }) {
 }
 
 function TransactionalRuleFields({ transactional }: { transactional?: TransactionalFields }) {
-  const [sourceSystem, setSourceSystem] = useState(
-    transactional?.sourceSystem ?? ruleSourceSystemOptions[0].value,
+  const initialSourceSystem =
+    (transactional?.sourceSystem ?? ruleSourceSystemOptions[0].value) as "saving" | "cardlink";
+  const initialTransactionTypeOptions = getRuleTransactionTypeOptions(initialSourceSystem);
+  const [sourceSystem, setSourceSystem] = useState<"saving" | "cardlink">(initialSourceSystem);
+  const [transactionType, setTransactionType] = useState<RuleTransactionType>(() => {
+    if (
+      transactional?.transactionType &&
+      initialTransactionTypeOptions.some((option) => option.value === transactional.transactionType)
+    ) {
+      return transactional.transactionType;
+    }
+    return initialTransactionTypeOptions[0].value;
+  });
+  const transactionTypeOptions = useMemo(
+    () => getRuleTransactionTypeOptions(sourceSystem),
+    [sourceSystem],
   );
-  const [transactionType, setTransactionType] = useState(
-    transactional?.transactionType ?? ruleTransactionTypeOptions[0].value,
-  );
+
+  function handleSourceSystemChange(nextSourceSystem: "saving" | "cardlink") {
+    setSourceSystem(nextSourceSystem);
+    const nextOptions = getRuleTransactionTypeOptions(nextSourceSystem);
+    if (!nextOptions.some((option) => option.value === transactionType)) {
+      setTransactionType(nextOptions[0].value);
+    }
+  }
   const [merchantCategory, setMerchantCategory] = useState(
     transactional?.merchantCategory ?? merchantCategoryOptions[0].value,
   );
@@ -967,13 +986,13 @@ function TransactionalRuleFields({ transactional }: { transactional?: Transactio
         label="Source system"
         value={sourceSystem}
         options={ruleSourceSystemOptions}
-        onChange={setSourceSystem}
+        onChange={(value) => handleSourceSystemChange(value as "saving" | "cardlink")}
       />
       <SelectField
         label="Transaction type"
         value={transactionType}
-        options={ruleTransactionTypeOptions}
-        onChange={setTransactionType}
+        options={transactionTypeOptions}
+        onChange={(value) => setTransactionType(value as RuleTransactionType)}
       />
       <SelectField
         label="Merchant category"

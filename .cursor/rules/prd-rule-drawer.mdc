@@ -30,7 +30,7 @@ Cap type, value point %, value min, value max
 | `activity` | Activity type, amount field, receive/redeem point |
 | `third_party_points` | Card type multi-select; repeatable Partner Earning Blocks (tier table + per-block caps) — ARCH §4.4.1 |
 | `personal_earning` | Type (birthday), target user CSV, reward type, receive point |
-| `transactional` | Source system, transaction type, merchant, card, channel, amount, conversion unit, multiplier, caps |
+| `transactional` | Source system, transaction type (gated by source — Saving: Purchase/Payment; Cardlink: TC 40), merchant, card, channel, amount, conversion unit, multiplier, caps |
 | `tactical` | Campaign name, target user, reward type + all transactional fields |
 
 ## Point calculation

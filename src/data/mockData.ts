@@ -8,7 +8,7 @@ import {
   Users01,
 } from "@untitledui/icons";
 import type { ExpiredDurationUnit, PointConfig } from "../domain/pointConfig";
-import type { Channel, NavItem, SourceSystem, TransactionType } from "../types";
+import type { Channel, NavItem, RuleTransactionType, SourceSystem, TransactionType } from "../types";
 import {
   generateCifPool,
   generateMockCampaigns,
@@ -125,11 +125,20 @@ export const ruleSourceSystemOptions = [
   { value: "cardlink", label: "Cardlink" },
 ];
 
-export const ruleTransactionTypeOptions = [
+export const savingRuleTransactionTypeOptions: { value: RuleTransactionType; label: string }[] = [
   { value: "purchase", label: "Purchase" },
   { value: "payment", label: "Payment" },
+];
+
+export const cardlinkRuleTransactionTypeOptions: { value: RuleTransactionType; label: string }[] = [
   { value: "tc-40", label: "TC 40" },
 ];
+
+export function getRuleTransactionTypeOptions(sourceSystem: "saving" | "cardlink") {
+  return sourceSystem === "cardlink"
+    ? cardlinkRuleTransactionTypeOptions
+    : savingRuleTransactionTypeOptions;
+}
 
 export const merchantCategoryOptions = [
   { value: "marketplace", label: "Marketplace" },
@@ -347,6 +356,7 @@ export const rules: Rule[] = [
     config: {
       ruleType: "transactional",
       sourceSystem: "cardlink",
+      transactionType: "tc-40",
     },
   },
   {

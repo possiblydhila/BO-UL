@@ -1,4 +1,4 @@
-import type { Channel, RuleStatus, RuleType, SourceSystem, TransactionType } from "../types";
+import type { Channel, RuleStatus, RuleType, RuleTransactionType, SourceSystem } from "../types";
 
 export type RuleMode = "EARN" | "REDEEM";
 
@@ -32,7 +32,7 @@ export type CapDefinition = {
 
 export type TransactionalFields = {
   sourceSystem?: Exclude<SourceSystem, "all">;
-  transactionType?: Exclude<TransactionType, "all">;
+  transactionType?: RuleTransactionType;
   channel?: Exclude<Channel, "all">;
   merchantCategory?: string;
   merchantName?: string;
