@@ -1,5 +1,3 @@
-"use client";
-
 import { type SelectHTMLAttributes, useId } from "react";
 import { ChevronDown } from "@untitledui/icons";
 import { HintText } from "@/components/base/input/hint-text";

@@ -158,11 +158,43 @@ export const merchantNameOptions = [
   { value: "traveloka", label: "Traveloka" },
 ];
 
-export const cardTypeOptions = [
-  { value: "bic-platinum-staff", label: "BIC Platinum Staff" },
-  { value: "bic-co-cobranding-biru-a", label: "BIC Co Cobranding Biru A" },
-  { value: "bic-gold", label: "BIC Gold" },
+export type DebitBin = {
+  code: string;
+  prefix: string;
+  network: string;
+  name: string;
+};
+
+export const debitBinCatalog: DebitBin[] = [
+  { code: "BIN 13", prefix: "526422", network: "MasterCard", name: "SILVER" },
+  { code: "BIN 14", prefix: "526423", network: "MasterCard", name: "DERIVATIF" },
+  { code: "BIN 18", prefix: "532668", network: "MasterCard", name: "EMERALD" },
+  { code: "BIN 19", prefix: "537176", network: "MasterCard", name: "GOLD" },
+  { code: "BIN 22", prefix: "519893", network: "MasterCard", name: "PLATINUM" },
+  { code: "BIN 30", prefix: "517892", network: "MasterCard", name: "CITILINK" },
+  { code: "BIN 31", prefix: "517863", network: "MasterCard", name: "BNI DEBIT PEGAWAI BNI" },
+  { code: "BIN 29", prefix: "517885", network: "MasterCard", name: "LOTTE WHOLESALE (GROSIR)" },
+  { code: "BIN 53", prefix: "524559", network: "MasterCard", name: "BNI TAPLUS MUDA" },
+  { code: "BIN 54", prefix: "222945", network: "MasterCard", name: "BNI - BATIK AIR" },
+  { code: "BIN 75", prefix: "222938", network: "MasterCard", name: "BIN Multicurrency" },
+  { code: "BIN 72", prefix: "518679", network: "MasterCard", name: "EMERALD PRIVATE" },
+  { code: "BIN 56", prefix: "194686", network: "GPN", name: "Indogrosir" },
+  { code: "BIN 43", prefix: "194634", network: "GPN", name: "GPN - Umum" },
 ];
+
+export const debitBinPrefixOptions = debitBinCatalog.map((bin) => ({
+  value: bin.prefix,
+  label: bin.prefix,
+  supportingText: bin.name,
+}));
+
+export function getDebitBinByPrefix(prefix: string): DebitBin | undefined {
+  return debitBinCatalog.find((bin) => bin.prefix === prefix);
+}
+
+export function isValidBinPrefix(value: string): boolean {
+  return /^\d{6}$/.test(value);
+}
 
 export const ruleChannelOptions = channelOptions.filter((option) => option.value !== "all");
 
@@ -185,13 +217,6 @@ export const targetUserOptions = [
 export const rewardTypeOptions = [
   { value: "bonus_point", label: "Bonus point" },
   { value: "transactional", label: "Transactional" },
-];
-
-export const cobrandCardTypeOptions = [
-  { value: "bic-co-cobranding-biru-a", label: "BIC Co-Branding Biru A" },
-  { value: "bic-co-cobranding-biru-c", label: "BIC Co-Branding Biru C" },
-  { value: "bic-co-cobranding-biru-d", label: "BIC Co-Branding Biru D" },
-  { value: "bic-co-cobranding-biru-e", label: "BIC Co-Branding Biru E" },
 ];
 
 export const thirdPartyProgramOptions = [
@@ -332,7 +357,7 @@ export const rules: Rule[] = [
     totalPoints: 926000,
     config: {
       ruleType: "third_party_points",
-      cardTypes: ["bic-co-cobranding-biru-a", "bic-co-cobranding-biru-c"],
+      binPrefixes: ["526422", "537176"],
       partnerBlocks: [
         {
           thirdParty: "garuda",

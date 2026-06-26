@@ -1,5 +1,3 @@
-"use client";
-
 import type { FC, FocusEventHandler, PointerEventHandler, ReactNode, Ref, RefAttributes } from "react";
 import { isValidElement, useCallback, useContext, useRef, useState } from "react";
 import { SearchLg } from "@untitledui/icons";

@@ -1,5 +1,3 @@
-"use client";
-
 import type { FC, ReactNode, Ref, RefAttributes } from "react";
 import { isValidElement } from "react";
 import { ChevronDown } from "@untitledui/icons";
@@ -134,3 +132,5 @@ _Select.ComboBox = ComboBox;
 _Select.Item = SelectItem;
 
 export { _Select as Select };
+export { MultiSelect } from "./multi-select";
+export { TagSelect } from "./tag-select";

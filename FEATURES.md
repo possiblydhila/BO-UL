@@ -373,7 +373,7 @@ Side panel for creating or editing rules. Fields change based on selected `RuleT
 | `activity` | Activity type, Amount field, Receive point / Redeem point |
 | `third_party_points` | `card_type` multi-select; repeatable **Partner Earning Blocks** each with tier table (`operator_type`, amount, `miles_point`) and per-block accumulation cap (`cap_type`, `timeframe`, `max_capacity`) — see [ARCHITECTURE.md §4.4.1](ARCHITECTURE.md#441-third-party-points--detailed-structure-working-assumption) |
 | `personal_earning` | Type (birthday), Target user (CSV upload), Reward type, Receive point |
-| `transactional` | Source system, Transaction type, Merchant category/name, Card type, Channel, Transaction amount, Conversion unit, Multiplier, Max capacity, Type/timeframe max capacity |
+| `transactional` | Source system, Transaction type, Merchant category/name, BIN (multi-select), Channel, Transaction amount, Conversion unit, Multiplier, Max capacity, Type/timeframe max capacity |
 | `tactical` | Campaign/event name, Target user, Reward type + all transactional fields |
 
 ### Point Calculation
@@ -563,7 +563,7 @@ type RuleConfig =
   | { ruleType: "activity"; activityType?; receivePoint?; ... }
   | { ruleType: "tactical"; campaignName?; rewardType?; transactional?; ... }
   | { ruleType: "personal_earning"; personalType?; rewardType?; receivePoint?; ... }
-  | { ruleType: "third_party_points"; cardTypes: string[]; partnerBlocks: PartnerBlock[] }
+  | { ruleType: "third_party_points"; binPrefixes: string[]; partnerBlocks: PartnerBlock[] }
 ```
 
 Unified engine modules: `src/domain/rule.ts`, `src/domain/ruleStatus.ts`, `src/domain/ruleConfig.ts`, `src/services/ruleQueries.ts`, `src/services/ruleWorkflow.ts`. Mock data: `rules[]` + `getRulesByMode()` in `src/data/mockData.ts`. See [ARCHITECTURE.md §3](ARCHITECTURE.md#3-core-domain-model). `PointConfig` in `src/domain/pointConfig.ts`; mock `defaultPointConfig` in `src/data/mockData.ts`.

@@ -1,5 +1,3 @@
-"use client";
-
 import type { FC, ReactElement, ReactNode } from "react";
 import React, { isValidElement } from "react";
 import type { ButtonProps as AriaButtonProps, LinkProps as AriaLinkProps } from "react-aria-components";

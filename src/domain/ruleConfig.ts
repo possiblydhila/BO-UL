@@ -22,7 +22,7 @@ export function createDefaultConfig(type: RuleType): RuleConfig {
     case "personal_earning":
       return { ruleType: "personal_earning" };
     case "third_party_points":
-      return { ruleType: "third_party_points", cardTypes: [], partnerBlocks: [] };
+      return { ruleType: "third_party_points", binPrefixes: [], partnerBlocks: [] };
   }
 }
 

@@ -36,7 +36,7 @@ export type TransactionalFields = {
   channel?: Exclude<Channel, "all">;
   merchantCategory?: string;
   merchantName?: string;
-  cardType?: string;
+  binPrefixes?: string[];
   conversionUnit?: number;
   multiplier?: number;
   maxCapacity?: number;
@@ -89,7 +89,7 @@ export type PartnerBlock = {
 
 export type ThirdPartyPointsConfig = {
   ruleType: "third_party_points";
-  cardTypes: string[];
+  binPrefixes: string[];
   partnerBlocks: PartnerBlock[];
 };
 

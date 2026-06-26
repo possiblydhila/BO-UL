@@ -24,9 +24,8 @@ import { Input } from "@/components/base/input/input";
 import { Table, TableCard } from "@/components/application/table/table";
 import { AppShell } from "@/components/layout/AppShell";
 import { Tabs } from "@/components/application/tabs/tabs";
+import { BinMultiSelectField } from "./components/BinMultiSelectField";
 import {
-  cardTypeOptions,
-  cobrandCardTypeOptions,
   defaultPointConfig,
   expiredDurationUnitOptions,
   balanceResetMonthOptions,
@@ -586,51 +585,6 @@ function createFieldId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
-function CheckboxGroupField({
-  label,
-  options,
-  selected,
-  onChange,
-  className = "",
-}: {
-  label: string;
-  options: { value: string; label: string }[];
-  selected: string[];
-  onChange: (selected: string[]) => void;
-  className?: string;
-}) {
-  return (
-    <fieldset className={className}>
-      <legend className="mb-1.5 block text-sm font-medium text-secondary">{label}</legend>
-      <div className="flex flex-wrap gap-2">
-        {options.map((option) => {
-          const checked = selected.includes(option.value);
-          return (
-            <label
-              key={option.value}
-              className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition ${
-                checked ? "border-brand bg-brand-primary text-brand-primary" : "border-primary bg-primary text-secondary"
-              }`}
-            >
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-primary text-brand-tertiary"
-                checked={checked}
-                onChange={() => {
-                  onChange(
-                    checked ? selected.filter((value) => value !== option.value) : [...selected, option.value],
-                  );
-                }}
-              />
-              {option.label}
-            </label>
-          );
-        })}
-      </div>
-    </fieldset>
-  );
-}
-
 type PartnerTier = {
   id: string;
   operatorType: string;
@@ -879,21 +833,15 @@ function PartnerBlockCard({
 
 function ThirdPartyPointsRuleFields({ rule }: { rule: Rule | null }) {
   const thirdParty = rule ? asThirdPartyConfig(rule) : undefined;
-  const [cardTypes, setCardTypes] = useState<string[]>(
-    thirdParty?.cardTypes?.length
-      ? thirdParty.cardTypes
-      : cobrandCardTypeOptions.map((option) => option.value),
-  );
+  const [binPrefixes, setBinPrefixes] = useState<string[]>(thirdParty?.binPrefixes ?? []);
   const [partnerBlocks, setPartnerBlocks] = useState<PartnerBlock[]>(createDefaultPartnerBlocks);
 
   return (
     <div className="grid gap-4 sm:col-span-2">
-      <CheckboxGroupField
+      <BinMultiSelectField
         className="sm:col-span-2"
-        label="Card type"
-        options={cobrandCardTypeOptions}
-        selected={cardTypes}
-        onChange={setCardTypes}
+        selected={binPrefixes}
+        onChange={setBinPrefixes}
       />
       <div className="space-y-4 sm:col-span-2">
         <div className="flex items-center justify-between gap-3">
@@ -971,7 +919,7 @@ function TransactionalRuleFields({ transactional }: { transactional?: Transactio
   const [merchantName, setMerchantName] = useState(
     transactional?.merchantName ?? merchantNameOptions[0].value,
   );
-  const [cardType, setCardType] = useState(transactional?.cardType ?? cardTypeOptions[0].value);
+  const [binPrefixes, setBinPrefixes] = useState<string[]>(transactional?.binPrefixes ?? []);
   const [channel, setChannel] = useState<string>(transactional?.channel ?? ruleChannelOptions[0].value);
   const [maxCapacityType, setMaxCapacityType] = useState(
     transactional?.maxCapacityType ?? maxCapacityTypeOptions[0].value,
@@ -1006,7 +954,9 @@ function TransactionalRuleFields({ transactional }: { transactional?: Transactio
         options={merchantNameOptions}
         onChange={setMerchantName}
       />
-      <SelectField label="Card type" value={cardType} options={cardTypeOptions} onChange={setCardType} />
+      <div className="sm:col-span-2">
+        <BinMultiSelectField selected={binPrefixes} onChange={setBinPrefixes} />
+      </div>
       <SelectField label="Channel" value={channel} options={ruleChannelOptions} onChange={setChannel} />
       <MockInput label="Transaction amount" value="500000" />
       <MockInput label="Conversion unit" value={transactional?.conversionUnit?.toString() ?? "100000"} />
