@@ -48,6 +48,8 @@ export type TransactionalFields = {
   merchantCategory?: string;
   merchantName?: string;
   binPrefixes?: string[];
+  currency?: string;
+  country?: string;
   conversionUnit?: number;
   multiplier?: number;
   maxCapacity?: number;

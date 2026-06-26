@@ -186,6 +186,47 @@ export function getDebitBinByPrefix(prefix: string): DebitBin | undefined {
   return debitBinCatalog.find((bin) => bin.prefix === prefix);
 }
 
+export type RuleCurrency = {
+  code: string;
+  tricode: string;
+  name: string;
+};
+
+export const ruleCurrencyOptions: RuleCurrency[] = [
+  { code: "idr", tricode: "IDR", name: "Indonesian Rupiah" },
+  { code: "sgd", tricode: "SGD", name: "Singapore Dollar" },
+  { code: "myr", tricode: "MYR", name: "Malaysian Ringgit" },
+  { code: "usd", tricode: "USD", name: "US Dollar" },
+  { code: "eur", tricode: "EUR", name: "Euro" },
+  { code: "jpy", tricode: "JPY", name: "Japanese Yen" },
+  { code: "aud", tricode: "AUD", name: "Australian Dollar" },
+  { code: "thb", tricode: "THB", name: "Thai Baht" },
+  { code: "cny", tricode: "CNY", name: "Chinese Yuan" },
+  { code: "gbp", tricode: "GBP", name: "British Pound" },
+];
+
+export function getCurrencyTricode(currencyCode: string): string {
+  return ruleCurrencyOptions.find((currency) => currency.code === currencyCode)?.tricode ?? currencyCode.toUpperCase();
+}
+
+export type RuleCountry = {
+  code: string;
+  name: string;
+};
+
+export const ruleCountryOptions: RuleCountry[] = [
+  { code: "ID", name: "Indonesia" },
+  { code: "SG", name: "Singapore" },
+  { code: "MY", name: "Malaysia" },
+  { code: "TH", name: "Thailand" },
+  { code: "US", name: "United States" },
+  { code: "JP", name: "Japan" },
+  { code: "AU", name: "Australia" },
+  { code: "CN", name: "China" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "DE", name: "Germany" },
+];
+
 export const ruleChannelOptions = channelOptions.filter((option) => option.value !== "all");
 
 export const maxCapacityTypeOptions = [
@@ -275,6 +316,8 @@ export const rules: Rule[] = [
       sourceSystem: "saving",
       transactionType: "payment",
       channel: "wondr",
+      currency: "idr",
+      country: "ID",
       conversionUnit: 100000,
       multiplier: 10,
       maxCapacity: 2000000,

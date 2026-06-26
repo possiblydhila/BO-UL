@@ -30,7 +30,7 @@ Cap type, value point %, value min, value max
 | `activity` | Activity type, amount field, receive/redeem point |
 | `third_party_points` | BIN multi-select + selected table; repeatable Partner Earning Blocks (tier table + per-block caps) — ARCH §4.4.1 |
 | `personal_earning` | Type (birthday), target user CSV, reward type, receive point |
-| `transactional` | Source system, transaction type (gated by source), merchant, BIN (multi-select + selected table), channel, amount, conversion unit, multiplier, max capacity, type max capacity, timeframe max capacity (daily / weekly / monthly / annually — min + max per row, max defaults to unlimited, at least one min required) |
+| `transactional` | Source system, transaction type (gated by source), merchant, BIN (multi-select + selected table), currency, country (flag icons), channel, amount (label shows currency tricode), conversion unit, multiplier, max capacity, type max capacity, timeframe max capacity (daily / weekly / monthly / annually — min + max per row, max defaults to unlimited, at least one min required) |
 | `tactical` | Campaign name, target user, reward type + all transactional fields |
 
 ## Point calculation

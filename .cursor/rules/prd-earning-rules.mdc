@@ -66,6 +66,19 @@ Switching source system resets transaction type to the first valid option when t
 - **Selected summary:** Full-width table below with No, Prefix BIN, Jenis, Nama, Remove (trash icon)
 - **Domain field:** `binPrefixes: string[]` on `TransactionalFields` and `ThirdPartyPointsConfig`
 
+## Currency and country (transactional, tactical)
+
+After **BIN**, the drawer shows:
+
+| Field | Control | Notes |
+|-------|---------|-------|
+| **Currency** | Native select | Options from `ruleCurrencyOptions` — label format `TRICODE — name` (e.g. `IDR — Indonesian Rupiah`) |
+| **Country** | UntitledUI `Select` via `CountrySelectField` | Options from `ruleCountryOptions`; each item shows SVG flag icon (`country-flag-icons`) |
+
+**Transaction amount** label includes the selected currency tricode, e.g. `Transaction amount (IDR)`.
+
+Domain fields: `currency`, `country` on `TransactionalFields`.
+
 ## Timeframe max capacity (transactional, tactical)
 
 Each timeframe has **min** and **max** point-cap inputs:

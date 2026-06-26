@@ -25,6 +25,7 @@ import { Table, TableCard } from "@/components/application/table/table";
 import { AppShell } from "@/components/layout/AppShell";
 import { Tabs } from "@/components/application/tabs/tabs";
 import { BinMultiSelectField } from "./components/BinMultiSelectField";
+import { CountrySelectField } from "./components/CountrySelectField";
 import {
   defaultPointConfig,
   expiredDurationUnitOptions,
@@ -39,7 +40,10 @@ import {
   rewardTypeOptions,
   ruleChannelOptions,
   ruleMaxCapacityTimeframeFields,
+  ruleCurrencyOptions,
+  ruleCountryOptions,
   rules as initialRules,
+  getCurrencyTricode,
   getRuleTransactionTypeOptions,
   ruleSourceSystemOptions,
   statusLabels,
@@ -942,7 +946,14 @@ function TransactionalRuleFields({ transactional }: { transactional?: Transactio
     transactional?.merchantName ?? merchantNameOptions[0].value,
   );
   const [binPrefixes, setBinPrefixes] = useState<string[]>(transactional?.binPrefixes ?? []);
+  const [currency, setCurrency] = useState(
+    transactional?.currency ?? ruleCurrencyOptions[0].code,
+  );
+  const [country, setCountry] = useState(
+    transactional?.country ?? ruleCountryOptions[0].code,
+  );
   const [channel, setChannel] = useState<string>(transactional?.channel ?? ruleChannelOptions[0].value);
+  const currencyTricode = getCurrencyTricode(currency);
   const [maxCapacityType, setMaxCapacityType] = useState(
     transactional?.maxCapacityType ?? maxCapacityTypeOptions[0].value,
   );
@@ -988,8 +999,18 @@ function TransactionalRuleFields({ transactional }: { transactional?: Transactio
       <div className="sm:col-span-2">
         <BinMultiSelectField selected={binPrefixes} onChange={setBinPrefixes} />
       </div>
+      <SelectField
+        label="Currency"
+        value={currency}
+        options={ruleCurrencyOptions.map((option) => ({
+          value: option.code,
+          label: `${option.tricode} — ${option.name}`,
+        }))}
+        onChange={setCurrency}
+      />
+      <CountrySelectField value={country} onChange={setCountry} />
       <SelectField label="Channel" value={channel} options={ruleChannelOptions} onChange={setChannel} />
-      <MockInput label="Transaction amount" value="500000" />
+      <MockInput label={`Transaction amount (${currencyTricode})`} value="500000" />
       <MockInput label="Conversion unit" value={transactional?.conversionUnit?.toString() ?? "100000"} />
       <MockInput label="Multiplier" value={transactional?.multiplier?.toString() ?? "10"} />
       <MockInput
