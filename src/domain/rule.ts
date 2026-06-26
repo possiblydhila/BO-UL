@@ -30,11 +30,16 @@ export type CapDefinition = {
   maxCapacity: number;
 };
 
-export type TimeframeMaxCapacity = {
-  daily?: number;
-  monthly?: number;
-  annually?: number;
+export type TimeframeCapacityMax = number | "unlimited";
+
+export type TimeframeCapacityLimit = {
+  min?: number;
+  max?: TimeframeCapacityMax;
 };
+
+export type TimeframeKey = "daily" | "weekly" | "monthly" | "annually";
+
+export type TimeframeMaxCapacity = Partial<Record<TimeframeKey, TimeframeCapacityLimit>>;
 
 export type TransactionalFields = {
   sourceSystem?: Exclude<SourceSystem, "all">;

@@ -14,7 +14,7 @@ import {
   generateMockCampaigns,
   generateMockTransactions,
 } from "./dashboardMockGenerator";
-import type { Rule, RuleMode } from "../domain/rule";
+import type { Rule, RuleMode, TimeframeKey } from "../domain/rule";
 import { statusLabels } from "../domain/ruleStatus";
 
 export const navItems: NavItem[] = [
@@ -199,11 +199,18 @@ export const maxCapacityTimeframeOptions = [
   { value: "monthly", label: "Monthly" },
 ];
 
-export const ruleMaxCapacityTimeframeFields = [
-  { key: "daily", label: "Daily", placeholder: "e.g. 10" },
-  { key: "monthly", label: "Monthly", placeholder: "e.g. 100" },
-  { key: "annually", label: "Annually", placeholder: "e.g. 1000" },
-] as const;
+export const TIMEFRAME_CAPACITY_DEFAULT_MAX = "unlimited";
+
+export const ruleMaxCapacityTimeframeFields: {
+  key: TimeframeKey;
+  label: string;
+  minPlaceholder: string;
+}[] = [
+  { key: "daily", label: "Daily", minPlaceholder: "e.g. 10" },
+  { key: "weekly", label: "Weekly", minPlaceholder: "e.g. 50" },
+  { key: "monthly", label: "Monthly", minPlaceholder: "e.g. 100" },
+  { key: "annually", label: "Annually", minPlaceholder: "e.g. 1000" },
+];
 
 export const targetUserOptions = [
   { value: "all", label: "All user" },
@@ -272,7 +279,12 @@ export const rules: Rule[] = [
       multiplier: 10,
       maxCapacity: 2000000,
       maxCapacityType: "per-user",
-      maxCapacityByTimeframe: { daily: 10, monthly: 100, annually: 1000 },
+      maxCapacityByTimeframe: {
+        daily: { min: 10, max: "unlimited" },
+        weekly: { min: 50, max: 500 },
+        monthly: { min: 100, max: "unlimited" },
+        annually: { min: 1000, max: "unlimited" },
+      },
     },
   },
   {

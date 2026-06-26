@@ -45,12 +45,13 @@ import {
   statusLabels,
   targetUserOptions,
   thirdPartyProgramOptions,
+  TIMEFRAME_CAPACITY_DEFAULT_MAX,
 } from "./data/mockData";
 import type { Rule, RuleMode } from "./domain/rule";
 import { formatAnnualBalanceResetDate, formatExpiryPolicySummary } from "./domain/pointConfig";
 import type { PointConfig } from "./domain/pointConfig";
 import { formatCapType, redemptionCapTypeOptions, type CapType } from "./domain/rule";
-import type { PersonalEarningConfig, TacticalConfig, TimeframeMaxCapacity, TransactionalFields } from "./domain/rule";
+import type { PersonalEarningConfig, TacticalConfig, TimeframeKey, TimeframeMaxCapacity, TransactionalFields } from "./domain/rule";
 import {
   asActivityConfig,
   asPersonalEarningConfig,
@@ -887,14 +888,25 @@ function ThirdPartyPointsRuleFields({ rule }: { rule: Rule | null }) {
   );
 }
 
-function createTimeframeCapacityState(
-  values?: TimeframeMaxCapacity,
-): Record<keyof TimeframeMaxCapacity, string> {
-  return {
-    daily: values?.daily != null ? String(values.daily) : "",
-    monthly: values?.monthly != null ? String(values.monthly) : "",
-    annually: values?.annually != null ? String(values.annually) : "",
-  };
+type TimeframeCapacityFormRow = { min: string; max: string };
+type TimeframeCapacityFormState = Record<TimeframeKey, TimeframeCapacityFormRow>;
+
+function createTimeframeCapacityState(values?: TimeframeMaxCapacity): TimeframeCapacityFormState {
+  return Object.fromEntries(
+    ruleMaxCapacityTimeframeFields.map((field) => {
+      const limit = values?.[field.key];
+      return [
+        field.key,
+        {
+          min: limit?.min != null ? String(limit.min) : "",
+          max:
+            limit?.max === "unlimited" || limit?.max == null
+              ? TIMEFRAME_CAPACITY_DEFAULT_MAX
+              : String(limit.max),
+        },
+      ];
+    }),
+  ) as TimeframeCapacityFormState;
 }
 
 function TransactionalRuleFields({ transactional }: { transactional?: TransactionalFields }) {
@@ -938,10 +950,13 @@ function TransactionalRuleFields({ transactional }: { transactional?: Transactio
     createTimeframeCapacityState(transactional?.maxCapacityByTimeframe),
   );
 
-  const hasTimeframeCapacity = Object.values(maxCapacityByTimeframe).some((value) => value.trim() !== "");
+  const hasTimeframeCapacity = Object.values(maxCapacityByTimeframe).some((row) => row.min.trim() !== "");
 
-  function updateTimeframeCapacity(key: keyof TimeframeMaxCapacity, value: string) {
-    setMaxCapacityByTimeframe((current) => ({ ...current, [key]: value }));
+  function updateTimeframeCapacity(key: TimeframeKey, field: "min" | "max", value: string) {
+    setMaxCapacityByTimeframe((current) => ({
+      ...current,
+      [key]: { ...current[key], [field]: value },
+    }));
   }
 
   return (
@@ -991,22 +1006,34 @@ function TransactionalRuleFields({ transactional }: { transactional?: Transactio
         <fieldset className="space-y-3">
           <legend className="text-sm font-medium text-secondary">Timeframe max capacity</legend>
           <p className="text-sm text-tertiary">
-            Set point limits per timeframe. At least one of daily, monthly, or annually is required.
+            Set min and max point limits per timeframe. Max defaults to unlimited. Fill at least one min
+            value across daily, weekly, monthly, or annually.
           </p>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             {ruleMaxCapacityTimeframeFields.map((field) => (
-              <TextField
-                key={field.key}
-                label={field.label}
-                type="number"
-                placeholder={field.placeholder}
-                value={maxCapacityByTimeframe[field.key]}
-                onChange={(value) => updateTimeframeCapacity(field.key, value)}
-              />
+              <div key={field.key} className="rounded-lg border border-secondary p-3">
+                <p className="mb-3 text-sm font-medium text-primary">{field.label}</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <TextField
+                    label="Min"
+                    type="number"
+                    placeholder={field.minPlaceholder}
+                    value={maxCapacityByTimeframe[field.key].min}
+                    onChange={(value) => updateTimeframeCapacity(field.key, "min", value)}
+                  />
+                  <TextField
+                    label="Max"
+                    placeholder={TIMEFRAME_CAPACITY_DEFAULT_MAX}
+                    value={maxCapacityByTimeframe[field.key].max}
+                    onChange={(value) => updateTimeframeCapacity(field.key, "max", value)}
+                    hint="Default is unlimited"
+                  />
+                </div>
+              </div>
             ))}
           </div>
           {!hasTimeframeCapacity && (
-            <p className="text-sm text-error-primary">Fill at least one timeframe capacity.</p>
+            <p className="text-sm text-error-primary">Fill at least one timeframe min capacity.</p>
           )}
         </fieldset>
       </div>

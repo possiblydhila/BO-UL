@@ -68,15 +68,16 @@ Switching source system resets transaction type to the first valid option when t
 
 ## Timeframe max capacity (transactional, tactical)
 
-Replaces the single timeframe dropdown with **three optional point-cap inputs**:
+Each timeframe has **min** and **max** point-cap inputs:
 
-| Field | Example |
-|-------|---------|
-| Daily | 10 |
-| Monthly | 100 |
-| Annually | 1000 |
+| Timeframe | Min example | Max example |
+|-----------|-------------|-------------|
+| Daily | 10 | unlimited (default) |
+| Weekly | 50 | 500 |
+| Monthly | 100 | unlimited (default) |
+| Annually | 1000 | unlimited (default) |
 
-**Validation:** At least one of the three must be filled; the others may stay empty. UI hint shown when all are blank (`maxCapacityByTimeframe` on `TransactionalFields`).
+**Max** defaults to `unlimited` and can be changed to a numeric cap. **Validation:** at least one timeframe must have a min value filled (`maxCapacityByTimeframe` on `TransactionalFields`).
 
 ## Status
 
