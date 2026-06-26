@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Calendar,
+  Check,
   ChevronDown,
   Download01,
   Edit03,
@@ -71,6 +72,7 @@ import {
   validateRuleForm,
   type RuleFormValues,
 } from "./services/ruleMutations";
+import { approveRule, rejectRule } from "./services/ruleWorkflow";
 import type { Role, RouteKey, RuleStatus, RuleTransactionType, RuleType } from "./types";
 import { calculatePoints, formatCompact, formatNumber } from "./utils/points";
 import { cx } from "./utils/cx";
@@ -157,7 +159,7 @@ function RuleModule({
 
   const tableItems = useMemo(
     () => filteredRules.map((rule, index) => ({ ...rule, rowNumber: index + 1 })),
-    [filteredRules],
+    [filteredRules, role],
   );
 
   function openAdd() {
@@ -172,6 +174,24 @@ function RuleModule({
     setDrawerRule(rule);
     setSelectedType(rule.type);
     setDrawerOpen(true);
+  }
+
+  function updateRuleInList(nextRule: Rule) {
+    onRulesChange(allRules.map((item) => (item.id === nextRule.id ? nextRule : item)));
+  }
+
+  function handleApprove(rule: Rule) {
+    const result = approveRule(rule, role);
+    if (result.ok) {
+      updateRuleInList(result.rule);
+    }
+  }
+
+  function handleReject(rule: Rule) {
+    const result = rejectRule(rule, role);
+    if (result.ok) {
+      updateRuleInList(result.rule);
+    }
   }
 
   function handleSaveRule(values: RuleFormValues) {
@@ -212,9 +232,11 @@ function RuleModule({
             </div>
             <Button iconLeading={Download01}>CSV</Button>
             <Button iconLeading={Download01}>XLSX</Button>
-            <Button variant="primary" iconLeading={Plus} onClick={openAdd}>
-              Add rule
-            </Button>
+            {role === "employee" && (
+              <Button variant="primary" iconLeading={Plus} onClick={openAdd}>
+                Add rule
+              </Button>
+            )}
           </>
         }
       />
@@ -260,7 +282,7 @@ function RuleModule({
             {ruleMode === "REDEEM" && <Table.Head id="capType" label="Cap type" />}
             <Table.Head id="actions" label="Actions" className="text-right" />
           </Table.Header>
-          <Table.Body items={tableItems}>
+          <Table.Body key={role} items={tableItems}>
             {(rule) => (
               <Table.Row id={rule.id}>
                 <Table.Cell className="text-quaternary">{rule.rowNumber}</Table.Cell>
@@ -283,9 +305,29 @@ function RuleModule({
                     {rule.redemption ? formatCapType(rule.redemption.capType) : "—"}
                   </Table.Cell>
                 )}
-                <Table.Cell>
-                  <div className="flex justify-end gap-2">
-                    {canEdit(role, rule.status) && (
+                <Table.Cell className="text-right">
+                  <div className="flex min-w-[11rem] flex-wrap justify-end gap-2">
+                    {role === "employee" && canEdit(role, rule.status) && (
+                      <Button className="h-9 min-h-9 px-3" iconLeading={Edit03} onClick={() => openEdit(rule)}>
+                        Edit
+                      </Button>
+                    )}
+                    {role === "approver" && rule.status === "in_review" && (
+                      <Button className="h-9 min-h-9 px-3" iconLeading={XClose} onClick={() => handleReject(rule)}>
+                        Reject
+                      </Button>
+                    )}
+                    {role === "approver" && rule.status === "in_review" && (
+                      <Button
+                        variant="primary"
+                        className="h-9 min-h-9 px-3"
+                        iconLeading={Check}
+                        onClick={() => handleApprove(rule)}
+                      >
+                        Approve
+                      </Button>
+                    )}
+                    {role === "approver" && canEdit(role, rule.status) && (
                       <Button className="h-9 min-h-9 px-3" iconLeading={Edit03} onClick={() => openEdit(rule)}>
                         Edit
                       </Button>

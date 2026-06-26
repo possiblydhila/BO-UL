@@ -10,7 +10,8 @@ export const statusLabels: Record<RuleStatus, string> = {
 };
 
 export function canEdit(role: Role, status: RuleStatus) {
-  return role === "employee" ? status === "draft" : status === "in_review" || status === "scheduled";
+  if (role === "employee") return status === "draft";
+  return status === "scheduled";
 }
 
 export function canSubmit(role: Role, status: RuleStatus) {

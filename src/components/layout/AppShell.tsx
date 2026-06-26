@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { PortalSidebar } from "@/components/application/app-navigation/portal-sidebar";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { navItems } from "@/data/mockData";
 import type { NavItem, RouteKey } from "@/types";
 
@@ -21,6 +22,7 @@ export function AppShell({ route, onRouteChange, activeItem, children }: AppShel
             <p className="text-xs font-medium text-quaternary">Portal / {activeItem.label}</p>
             <p className="truncate text-sm font-semibold text-primary">{activeItem.description}</p>
           </div>
+          <ThemeToggle />
         </header>
 
         <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 md:px-8 md:py-8">

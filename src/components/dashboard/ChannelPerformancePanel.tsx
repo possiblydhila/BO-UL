@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import type { ComputedKpi, DistributionPoint } from "../../types";
+import { chartAxisTick, chartGridStroke, chartTooltipContentStyle } from "../../utils/chartStyles";
 import { formatCompact } from "../../utils/points";
 import { KpiCard } from "./KpiGrid";
 
@@ -47,10 +48,10 @@ export function ChannelPerformancePanel({
           <div className="h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={channelChartData} margin={{ left: 8, right: 12, top: 8, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                <YAxis tickLine={false} axisLine={false} width={40} />
-                <Tooltip formatter={(v: number) => [`${v}M`, "Points"]} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} tick={chartAxisTick} />
+                <YAxis tickLine={false} axisLine={false} width={40} tick={chartAxisTick} />
+                <Tooltip contentStyle={chartTooltipContentStyle} formatter={(v: number) => [`${v}M`, "Points"]} />
                 <Bar dataKey="value" name="Point M" radius={[6, 6, 0, 0]} fill="#1570ef" />
               </BarChart>
             </ResponsiveContainer>
@@ -73,7 +74,7 @@ export function ChannelPerformancePanel({
                     <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v: number) => formatCompact(v)} />
+                <Tooltip contentStyle={chartTooltipContentStyle} formatter={(v: number) => formatCompact(v)} />
               </PieChart>
             </ResponsiveContainer>
             <div className="flex flex-col justify-center gap-2 overflow-y-auto">

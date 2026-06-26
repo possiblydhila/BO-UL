@@ -1,5 +1,6 @@
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { Campaign } from "../../types";
+import { chartAxisTick, chartGridStroke, chartTooltipContentStyle } from "../../utils/chartStyles";
 import { formatCompact } from "../../utils/points";
 import { SelectField } from "./fields";
 
@@ -78,10 +79,10 @@ export function BeforeAfterCampaign({
       <div className="h-[240px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ left: 8, right: 12, top: 8, bottom: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="label" tickLine={false} axisLine={false} />
-            <YAxis tickLine={false} axisLine={false} width={56} tickFormatter={(v) => formatCompact(v)} />
-            <Tooltip formatter={(value: number) => [formatCompact(value), "Points earned"]} />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+            <XAxis dataKey="label" tickLine={false} axisLine={false} tick={chartAxisTick} />
+            <YAxis tickLine={false} axisLine={false} width={56} tick={chartAxisTick} tickFormatter={(v) => formatCompact(v)} />
+            <Tooltip contentStyle={chartTooltipContentStyle} formatter={(value: number) => [formatCompact(value), "Points earned"]} />
             <Legend />
             <Bar dataKey="points" name="Points earned" radius={[6, 6, 0, 0]} fill="#1570ef" />
           </BarChart>

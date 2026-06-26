@@ -9,6 +9,7 @@ import {
   YAxis,
 } from "recharts";
 import type { TrendGranularity, TrendPoint } from "../../types";
+import { chartAxisTick, chartGridStroke, chartTooltipContentStyle } from "../../utils/chartStyles";
 
 const GRANULARITY_OPTIONS: { value: TrendGranularity; label: string }[] = [
   { value: "daily", label: "Daily" },
@@ -54,10 +55,10 @@ export function TrendChart({
       <div className="h-[280px] min-w-0">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ left: 8, right: 12, top: 8, bottom: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="period" tickLine={false} axisLine={false} />
-            <YAxis tickLine={false} axisLine={false} width={44} />
-            <Tooltip />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+            <XAxis dataKey="period" tickLine={false} axisLine={false} tick={chartAxisTick} />
+            <YAxis tickLine={false} axisLine={false} width={44} tick={chartAxisTick} />
+            <Tooltip contentStyle={chartTooltipContentStyle} />
             <Legend />
             <Line type="monotone" dataKey="cifEarn" name="CIF Earn" stroke="#1570ef" strokeWidth={2} dot={false} />
             <Line type="monotone" dataKey="cifRedeem" name="CIF Redeem" stroke="#12b76a" strokeWidth={2} dot={false} />

@@ -20,24 +20,39 @@ Configure and review point-earning rules. Role-based editing and add/edit drawer
 - Summary counters per status (draft, in_review, scheduled, active, inactive, expired)
 - Search by name, code, or ID; status filter
 - Table: No, Rule, Period, Type, Status, Created time, Total CIF, Total point, Actions
-- Actions: Edit (role/status gated), Inactive on active rules (non-functional)
+- **Actions column** — role- and status-gated (see Permissions below)
 - Add rule drawer — see `prd-rule-drawer`
 - Export CSV/XLSX (non-functional)
 
 ## Permissions
 
+| Role | Table actions | Drawer |
+|------|---------------|--------|
+| **Employee** | **Edit** on `draft` only | Create/edit draft rules; **Submit for review** moves rule to `in_review` |
+| **Approver** | **Approve**, **Reject** on `in_review`; **Edit** on `scheduled` | **Approve** → `scheduled`; **Reject** → `draft` |
+
+Guards in `src/domain/ruleStatus.ts`:
+
 ```
-employee  → edit draft only
-approver  → edit in_review, scheduled
+employee  → canEdit: draft only
+           canSubmit: draft only
+
+approver  → canEdit: scheduled only
+           canApprove / canReject: in_review only
 ```
 
-(`canEdit` in `src/domain/ruleStatus.ts`)
+Workflow stubs in `src/services/ruleWorkflow.ts`: `submitRule`, `approveRule`, `rejectRule`.
 
 ## User flows
 
-**Employee:** View table → search/filter → edit draft only → Add rule → drawer → Submit for review (no persistence).
+**Employee:** View table → search/filter → **Edit** draft only → Add rule → drawer → fill fields → **Submit for review** (transitions `draft` → `in_review`; no persistence in prototype).
 
-**Approver:** Toggle role → edit in_review and scheduled rules.
+**Approver:** Toggle role to **approver** → filter or locate rules in **In Review** → use **Actions** column:
+
+1. **Approve** — accept the submission; rule moves to `scheduled`.
+2. **Reject** — send back to maker; rule returns to `draft`.
+
+For **`scheduled`** rules, approver may **Edit** to adjust before go-live. Approver cannot approve/reject rules that are not in `in_review`.
 
 ## State & data
 
@@ -97,4 +112,7 @@ Each timeframe has **min** and **max** point-cap inputs:
 | Capability | Status |
 |------------|--------|
 | List, search, filter, drawer, period picker | Done (UI) |
-| Submit/save, inactive toggle, export | Non-functional |
+| Employee submit for review | Stub (`submitRule`) |
+| Approver approve / reject in Actions column (`in_review`) | Done (UI) |
+| Approver edit scheduled rules | Done (UI) |
+| Inactive toggle, export | Non-functional |
