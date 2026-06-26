@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { Trash01 } from "@untitledui/icons";
-import type { Selection } from "react-aria-components";
 import { Table, TableCard } from "@/components/application/table/table";
 import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { MultiSelect } from "@/components/base/select/multi-select";
@@ -13,12 +12,9 @@ const debitBinSelectItems: SelectItemType[] = debitBinCatalog.map((bin) => ({
   supportingText: `${bin.network} · ${bin.name}`,
 }));
 
-function selectionToPrefixes(keys: Selection): string[] {
-  if (keys === "all") {
-    return debitBinCatalog.map((bin) => bin.prefix);
-  }
-  return Array.from(keys).map(String);
-}
+const allBinPrefixes = debitBinCatalog.map((bin) => bin.prefix);
+const BIN_TABLE_VISIBLE_ROWS = 5;
+const BIN_TABLE_SCROLL_MAX_HEIGHT = `calc(2.25rem + 3.5rem * ${BIN_TABLE_VISIBLE_ROWS})`;
 
 type BinMultiSelectFieldProps = {
   label?: string;
@@ -52,9 +48,11 @@ export function BinMultiSelectField({
         hint="Search and select multiple BIN prefixes from the dropdown."
         items={debitBinSelectItems}
         selectedKeys={selectedKeys}
-        onSelectionChange={(keys) => onChange(selectionToPrefixes(keys))}
+        onSelectionChange={(keys) =>
+          onChange(keys === "all" ? allBinPrefixes : Array.from(keys).map(String))
+        }
         onReset={() => onChange([])}
-        onSelectAll={() => onChange(debitBinCatalog.map((bin) => bin.prefix))}
+        onSelectAll={() => onChange(allBinPrefixes)}
         selectedCountFormatter={(count) => `${count} BIN${count === 1 ? "" : "s"} selected`}
       >
         {(item) => (
@@ -71,8 +69,26 @@ export function BinMultiSelectField({
       {selected.length > 0 && (
         <TableCard.Root>
           <TableCard.Header title="Selected BIN prefixes" badge={String(selected.length)} />
-          <Table aria-label="Selected BIN prefixes" size="sm">
-            <Table.Header>
+          <div
+            className={
+              selected.length > BIN_TABLE_VISIBLE_ROWS
+                ? "overflow-y-auto"
+                : undefined
+            }
+            style={
+              selected.length > BIN_TABLE_VISIBLE_ROWS
+                ? { maxHeight: BIN_TABLE_SCROLL_MAX_HEIGHT }
+                : undefined
+            }
+          >
+            <Table aria-label="Selected BIN prefixes" size="sm">
+              <Table.Header
+                className={
+                  selected.length > BIN_TABLE_VISIBLE_ROWS
+                    ? "sticky top-0 z-10 bg-primary"
+                    : undefined
+                }
+              >
               <Table.Head id="rowNumber" label="No" />
               <Table.Head id="prefix" label="Prefix BIN" isRowHeader />
               <Table.Head id="network" label="Jenis" />
@@ -104,6 +120,7 @@ export function BinMultiSelectField({
               }}
             </Table.Body>
           </Table>
+          </div>
         </TableCard.Root>
       )}
     </div>

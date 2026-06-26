@@ -182,18 +182,8 @@ export const debitBinCatalog: DebitBin[] = [
   { code: "BIN 43", prefix: "194634", network: "GPN", name: "GPN - Umum" },
 ];
 
-export const debitBinPrefixOptions = debitBinCatalog.map((bin) => ({
-  value: bin.prefix,
-  label: bin.prefix,
-  supportingText: bin.name,
-}));
-
 export function getDebitBinByPrefix(prefix: string): DebitBin | undefined {
   return debitBinCatalog.find((bin) => bin.prefix === prefix);
-}
-
-export function isValidBinPrefix(value: string): boolean {
-  return /^\d{6}$/.test(value);
 }
 
 export const ruleChannelOptions = channelOptions.filter((option) => option.value !== "all");

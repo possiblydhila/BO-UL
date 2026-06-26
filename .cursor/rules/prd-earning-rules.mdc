@@ -62,9 +62,8 @@ Switching source system resets transaction type to the first valid option when t
 
 - **Catalog:** `debitBinCatalog` in `src/data/mockData.ts` (14 debit BINs: prefix, network/Jenis, product name)
 - **Field:** UntitledUI `MultiSelect` via `BinMultiSelectField` (`src/components/BinMultiSelectField.tsx`)
-- **Search:** Filter by prefix, product name, network, or BIN code as user types
-- **Manual entry:** Enter a 6-digit prefix to add (catalog match or free-form)
-- **Selected summary:** Chips above table; full-width table below with No, Prefix BIN, Jenis, Nama, Remove
+- **Search:** Filter by prefix or product name in the MultiSelect dropdown
+- **Selected summary:** Full-width table below with No, Prefix BIN, Jenis, Nama, Remove (trash icon)
 - **Domain field:** `binPrefixes: string[]` on `TransactionalFields` and `ThirdPartyPointsConfig`
 
 ## Status

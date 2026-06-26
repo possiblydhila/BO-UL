@@ -133,4 +133,3 @@ _Select.Item = SelectItem;
 
 export { _Select as Select };
 export { MultiSelect } from "./multi-select";
-export { TagSelect } from "./tag-select";
