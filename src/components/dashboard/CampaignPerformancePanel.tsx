@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+import { Table } from "@/components/application/table/table";
 import type { Campaign, ComputedKpi } from "../../types";
 import { formatNumber } from "../../utils/points";
 import { KpiCard } from "./KpiGrid";
@@ -9,8 +11,12 @@ export function CampaignPerformancePanel({
   kpis: ComputedKpi[];
   campaigns: Campaign[];
 }) {
-  const sorted = [...campaigns].sort(
-    (a, b) => b.participantCifIds.length - a.participantCifIds.length,
+  const items = useMemo(
+    () =>
+      [...campaigns]
+        .sort((a, b) => b.participantCifIds.length - a.participantCifIds.length)
+        .slice(0, 5),
+    [campaigns],
   );
 
   return (
@@ -26,46 +32,42 @@ export function CampaignPerformancePanel({
       </div>
       <div>
         <h4 className="mb-3 text-sm font-semibold text-secondary">Campaign participation</h4>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[400px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-secondary text-xs font-semibold text-quaternary">
-                <th className="pb-2 pr-4">Campaign</th>
-                <th className="pb-2 pr-4">Status</th>
-                <th className="pb-2 pr-4 text-right">Participants</th>
-                <th className="pb-2 text-right">Rate</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.slice(0, 5).map((campaign) => {
-                const rate =
-                  campaign.targetUserCount > 0
-                    ? ((campaign.participantCifIds.length / campaign.targetUserCount) * 100).toFixed(1)
-                    : "0.0";
-                return (
-                  <tr key={campaign.id} className="border-b border-slate-100">
-                    <td className="py-2.5 pr-4 font-medium text-primary">{campaign.name}</td>
-                    <td className="py-2.5 pr-4">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                          campaign.status === "active"
-                            ? "bg-success-50 text-success-primary"
-                            : "bg-tertiary text-tertiary"
-                        }`}
-                      >
-                        {campaign.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 pr-4 text-right tabular-nums text-secondary">
-                      {formatNumber(campaign.participantCifIds.length)}
-                    </td>
-                    <td className="py-2.5 text-right tabular-nums text-secondary">{rate}%</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Table aria-label="Campaign participation" size="sm">
+          <Table.Header>
+            <Table.Head id="name" label="Campaign" isRowHeader />
+            <Table.Head id="status" label="Status" />
+            <Table.Head id="participants" label="Participants" className="text-right" />
+            <Table.Head id="rate" label="Rate" className="text-right" />
+          </Table.Header>
+          <Table.Body items={items}>
+            {(campaign) => {
+              const rate =
+                campaign.targetUserCount > 0
+                  ? ((campaign.participantCifIds.length / campaign.targetUserCount) * 100).toFixed(1)
+                  : "0.0";
+              return (
+                <Table.Row id={campaign.id}>
+                  <Table.Cell className="font-medium text-primary">{campaign.name}</Table.Cell>
+                  <Table.Cell>
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                        campaign.status === "active"
+                          ? "bg-success-50 text-success-primary"
+                          : "bg-tertiary text-tertiary"
+                      }`}
+                    >
+                      {campaign.status}
+                    </span>
+                  </Table.Cell>
+                  <Table.Cell className="text-right tabular-nums">
+                    {formatNumber(campaign.participantCifIds.length)}
+                  </Table.Cell>
+                  <Table.Cell className="text-right tabular-nums">{rate}%</Table.Cell>
+                </Table.Row>
+              );
+            }}
+          </Table.Body>
+        </Table>
       </div>
     </section>
   );

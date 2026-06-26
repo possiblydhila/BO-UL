@@ -1,9 +1,10 @@
 import { useMemo } from "react";
+import { Trash01 } from "@untitledui/icons";
 import type { Selection } from "react-aria-components";
 import { Table, TableCard } from "@/components/application/table/table";
+import { ButtonUtility } from "@/components/base/buttons/button-utility";
 import { MultiSelect } from "@/components/base/select/multi-select";
 import type { SelectItemType } from "@/components/base/select/select-shared";
-import { Button } from "@/components/ui/app-primitives";
 import { debitBinCatalog, getDebitBinByPrefix } from "@/data/mockData";
 
 const debitBinSelectItems: SelectItemType[] = debitBinCatalog.map((bin) => ({
@@ -76,7 +77,7 @@ export function BinMultiSelectField({
               <Table.Head id="prefix" label="Prefix BIN" isRowHeader />
               <Table.Head id="network" label="Jenis" />
               <Table.Head id="name" label="Nama" />
-              <Table.Head id="actions" label="Actions" className="text-right" />
+              <Table.Head id="actions" label="Actions" className="text-center [&_[role=group]]:justify-center" />
             </Table.Header>
             <Table.Body items={tableItems}>
               {(item) => {
@@ -87,11 +88,15 @@ export function BinMultiSelectField({
                     <Table.Cell className="font-medium text-primary">{item.prefix}</Table.Cell>
                     <Table.Cell>{bin?.network ?? "—"}</Table.Cell>
                     <Table.Cell>{bin?.name ?? "—"}</Table.Cell>
-                    <Table.Cell>
-                      <div className="flex justify-end">
-                        <Button variant="ghost" onClick={() => removePrefix(item.prefix)}>
-                          Remove
-                        </Button>
+                    <Table.Cell className="text-center">
+                      <div className="flex justify-center">
+                        <ButtonUtility
+                          icon={Trash01}
+                          tooltip="Remove"
+                          color="tertiary"
+                          className="text-fg-error-primary hover:bg-error-primary hover:text-error-primary_hover"
+                          onClick={() => removePrefix(item.prefix)}
+                        />
                       </div>
                     </Table.Cell>
                   </Table.Row>

@@ -117,7 +117,7 @@ const TableHeader = <T extends object>({ columns, children, bordered = true, cla
             {...props}
             className={(state) =>
                 cx(
-                    "relative bg-secondary",
+                    "relative bg-primary",
                     size === "sm" ? "h-9" : "h-11",
 
                     // Row border—using an "after" pseudo-element to avoid the border taking up space.
@@ -209,7 +209,7 @@ const TableRow = <T extends object>({ columns, children, className, highlightSel
             {...props}
             className={(state) =>
                 cx(
-                    "relative outline-focus-ring transition-colors after:pointer-events-none hover:bg-secondary focus-visible:outline-2 focus-visible:-outline-offset-2",
+                    "relative outline-focus-ring transition-colors after:pointer-events-none odd:bg-secondary hover:bg-secondary focus-visible:outline-2 focus-visible:-outline-offset-2",
                     size === "sm" ? "h-14" : "h-18",
                     highlightSelectedRow && "selected:bg-secondary",
 
