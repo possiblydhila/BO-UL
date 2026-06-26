@@ -128,10 +128,16 @@ export const ruleSourceSystemOptions = [
 export const savingRuleTransactionTypeOptions: { value: RuleTransactionType; label: string }[] = [
   { value: "purchase", label: "Purchase" },
   { value: "payment", label: "Payment" },
+  { value: "ingoing-transfer", label: "Ingoing transfer" },
+  { value: "outgoing-transfer", label: "Outgoing transfer" },
+  { value: "va", label: "Virtual account" },
 ];
 
 export const cardlinkRuleTransactionTypeOptions: { value: RuleTransactionType; label: string }[] = [
-  { value: "tc-40", label: "TC 40" },
+  { value: "tc-40", label: "TC 40 (Retail Purchase)" },
+  { value: "tc-41", label: "TC 41 (Reversal Retail Purchase)" },
+  { value: "tc-65", label: "TC 65 (Asuransi Kartu Kredit)" },
+  { value: "tc-66", label: "TC 66 (Reversal Asuransi kartu kredit)" },
 ];
 
 export function getRuleTransactionTypeOptions(sourceSystem: "saving" | "cardlink") {

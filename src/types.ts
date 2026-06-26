@@ -21,7 +21,16 @@ export type TransactionType =
   | "outgoing-transfer"
   | "va";
 
-export type RuleTransactionType = "purchase" | "payment" | "tc-40";
+export type RuleTransactionType =
+  | "purchase"
+  | "payment"
+  | "ingoing-transfer"
+  | "outgoing-transfer"
+  | "va"
+  | "tc-40"
+  | "tc-41"
+  | "tc-65"
+  | "tc-66";
 
 export type TxnSourceSystem = "saving" | "cardlink";
 export type TxnChannel = "API" | "Wondr" | "SMS" | "BNI Direct" | "Mbank" | "ATM";
