@@ -30,6 +30,12 @@ export type CapDefinition = {
   maxCapacity: number;
 };
 
+export type TimeframeMaxCapacity = {
+  daily?: number;
+  monthly?: number;
+  annually?: number;
+};
+
 export type TransactionalFields = {
   sourceSystem?: Exclude<SourceSystem, "all">;
   transactionType?: RuleTransactionType;
@@ -41,7 +47,7 @@ export type TransactionalFields = {
   multiplier?: number;
   maxCapacity?: number;
   maxCapacityType?: string;
-  maxCapacityTimeframe?: string;
+  maxCapacityByTimeframe?: TimeframeMaxCapacity;
 };
 
 export type TransactionalConfig = TransactionalFields & {

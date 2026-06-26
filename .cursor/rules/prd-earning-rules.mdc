@@ -66,6 +66,18 @@ Switching source system resets transaction type to the first valid option when t
 - **Selected summary:** Full-width table below with No, Prefix BIN, Jenis, Nama, Remove (trash icon)
 - **Domain field:** `binPrefixes: string[]` on `TransactionalFields` and `ThirdPartyPointsConfig`
 
+## Timeframe max capacity (transactional, tactical)
+
+Replaces the single timeframe dropdown with **three optional point-cap inputs**:
+
+| Field | Example |
+|-------|---------|
+| Daily | 10 |
+| Monthly | 100 |
+| Annually | 1000 |
+
+**Validation:** At least one of the three must be filled; the others may stay empty. UI hint shown when all are blank (`maxCapacityByTimeframe` on `TransactionalFields`).
+
 ## Status
 
 | Capability | Status |

@@ -29,7 +29,6 @@ import {
   defaultPointConfig,
   expiredDurationUnitOptions,
   balanceResetMonthOptions,
-  maxCapacityTimeframeOptions,
   maxCapacityTypeOptions,
   merchantCategoryOptions,
   merchantNameOptions,
@@ -39,6 +38,7 @@ import {
   reportTabs,
   rewardTypeOptions,
   ruleChannelOptions,
+  ruleMaxCapacityTimeframeFields,
   rules as initialRules,
   getRuleTransactionTypeOptions,
   ruleSourceSystemOptions,
@@ -50,7 +50,7 @@ import type { Rule, RuleMode } from "./domain/rule";
 import { formatAnnualBalanceResetDate, formatExpiryPolicySummary } from "./domain/pointConfig";
 import type { PointConfig } from "./domain/pointConfig";
 import { formatCapType, redemptionCapTypeOptions, type CapType } from "./domain/rule";
-import type { PersonalEarningConfig, TacticalConfig, TransactionalFields } from "./domain/rule";
+import type { PersonalEarningConfig, TacticalConfig, TimeframeMaxCapacity, TransactionalFields } from "./domain/rule";
 import {
   asActivityConfig,
   asPersonalEarningConfig,
@@ -887,6 +887,16 @@ function ThirdPartyPointsRuleFields({ rule }: { rule: Rule | null }) {
   );
 }
 
+function createTimeframeCapacityState(
+  values?: TimeframeMaxCapacity,
+): Record<keyof TimeframeMaxCapacity, string> {
+  return {
+    daily: values?.daily != null ? String(values.daily) : "",
+    monthly: values?.monthly != null ? String(values.monthly) : "",
+    annually: values?.annually != null ? String(values.annually) : "",
+  };
+}
+
 function TransactionalRuleFields({ transactional }: { transactional?: TransactionalFields }) {
   const initialSourceSystem =
     (transactional?.sourceSystem ?? ruleSourceSystemOptions[0].value) as "saving" | "cardlink";
@@ -924,9 +934,15 @@ function TransactionalRuleFields({ transactional }: { transactional?: Transactio
   const [maxCapacityType, setMaxCapacityType] = useState(
     transactional?.maxCapacityType ?? maxCapacityTypeOptions[0].value,
   );
-  const [maxCapacityTimeframe, setMaxCapacityTimeframe] = useState(
-    transactional?.maxCapacityTimeframe ?? maxCapacityTimeframeOptions[0].value,
+  const [maxCapacityByTimeframe, setMaxCapacityByTimeframe] = useState(() =>
+    createTimeframeCapacityState(transactional?.maxCapacityByTimeframe),
   );
+
+  const hasTimeframeCapacity = Object.values(maxCapacityByTimeframe).some((value) => value.trim() !== "");
+
+  function updateTimeframeCapacity(key: keyof TimeframeMaxCapacity, value: string) {
+    setMaxCapacityByTimeframe((current) => ({ ...current, [key]: value }));
+  }
 
   return (
     <>
@@ -971,12 +987,29 @@ function TransactionalRuleFields({ transactional }: { transactional?: Transactio
         options={maxCapacityTypeOptions}
         onChange={setMaxCapacityType}
       />
-      <SelectField
-        label="Timeframe max capacity"
-        value={maxCapacityTimeframe}
-        options={maxCapacityTimeframeOptions}
-        onChange={setMaxCapacityTimeframe}
-      />
+      <div className="sm:col-span-2">
+        <fieldset className="space-y-3">
+          <legend className="text-sm font-medium text-secondary">Timeframe max capacity</legend>
+          <p className="text-sm text-tertiary">
+            Set point limits per timeframe. At least one of daily, monthly, or annually is required.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {ruleMaxCapacityTimeframeFields.map((field) => (
+              <TextField
+                key={field.key}
+                label={field.label}
+                type="number"
+                placeholder={field.placeholder}
+                value={maxCapacityByTimeframe[field.key]}
+                onChange={(value) => updateTimeframeCapacity(field.key, value)}
+              />
+            ))}
+          </div>
+          {!hasTimeframeCapacity && (
+            <p className="text-sm text-error-primary">Fill at least one timeframe capacity.</p>
+          )}
+        </fieldset>
+      </div>
     </>
   );
 }

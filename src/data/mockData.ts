@@ -199,6 +199,12 @@ export const maxCapacityTimeframeOptions = [
   { value: "monthly", label: "Monthly" },
 ];
 
+export const ruleMaxCapacityTimeframeFields = [
+  { key: "daily", label: "Daily", placeholder: "e.g. 10" },
+  { key: "monthly", label: "Monthly", placeholder: "e.g. 100" },
+  { key: "annually", label: "Annually", placeholder: "e.g. 1000" },
+] as const;
+
 export const targetUserOptions = [
   { value: "all", label: "All user" },
   { value: "limited", label: "Limited" },
@@ -265,6 +271,8 @@ export const rules: Rule[] = [
       conversionUnit: 100000,
       multiplier: 10,
       maxCapacity: 2000000,
+      maxCapacityType: "per-user",
+      maxCapacityByTimeframe: { daily: 10, monthly: 100, annually: 1000 },
     },
   },
   {
